@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, Bell, Sparkles, User } from "lucide-react";
+import { Search, Bell, Sparkles } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
 import type { Role } from "@/types";
 
@@ -32,43 +32,44 @@ export function Header({
             Selamat datang kembali,
           </p>
           <div className="mt-0.5 flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-base font-bold tracking-tight text-ink">
-              {userName} {role === "teacher" && "(Fisika)"}
+            <h1 className="truncate text-sm font-bold tracking-tight text-ink sm:text-base">
+              {userName}
             </h1>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B8E2D8] bg-[#E6F4F1] px-2.5 py-0.5 text-[11px] font-bold text-[#0D523C]">
-              <User className="h-3 w-3 shrink-0" />
-              <span>{roleLabel} {identifier ? `(${identifier})` : ""}</span>
+            <span className="glass-pill rounded-full border border-brand-line/50 bg-brand-tint/90 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-brand">
+              {roleLabel}
             </span>
+            {identifier && (
+              <span className="nums glass-pill hidden rounded-full border border-line-2/80 bg-white/70 px-2.5 py-0.5 text-[10px] font-semibold text-muted sm:inline">
+                {identifier}
+              </span>
+            )}
           </div>
-          <p className="text-xs text-muted mt-0.5">
-            Ringkasan asesmen dan tugas penilaian Anda
-          </p>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2.5">
-          <div className="relative flex-1 sm:w-60 sm:flex-none">
+          <div className="relative flex-1 md:w-64 md:flex-none">
             <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Cari asesmen..."
+              placeholder="Cari asesmen, kelas, siswa…"
               aria-label="Cari"
-              className="h-9 w-full rounded-xl border border-gray-200 bg-white pr-3 pl-9 text-xs font-medium text-ink shadow-2xs transition-all placeholder:text-muted focus:bg-white focus:border-[#1E3A2F] focus:outline-none"
+              className="h-9 w-full rounded-xl border border-white/90 bg-white/70 pr-3 pl-9 text-xs font-medium text-ink shadow-xs backdrop-blur-md transition-all duration-200 placeholder:text-muted/70 focus:bg-white focus:shadow-sm focus-visible:border-brand-line focus-visible:ring-2 focus-visible:ring-brand-line/40 focus-visible:outline-none"
             />
           </div>
 
           <button
             onClick={onOpenHelp}
             aria-label="Bantuan"
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white text-muted shadow-2xs transition-colors hover:text-[#1E3A2F] hover:border-[#1E3A2F]"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/85 bg-white/70 text-muted shadow-xs backdrop-blur-md transition-all duration-200 hover:bg-white hover:text-brand hover:shadow-sm"
           >
             <Bell className="h-4 w-4" />
           </button>
 
           <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1E3A2F] text-xs font-bold text-white shadow-2xs"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/85 bg-gradient-to-br from-brand to-forest-dark text-xs font-bold text-white shadow-xs"
             aria-label={`Avatar ${userName}`}
           >
             {initials(userName)}
