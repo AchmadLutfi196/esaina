@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth/config";
 import { LogoutButton } from "../logout-button";
 import { ClassList } from "./class-list";
 import { AssessmentBuilder } from "./assessment-builder";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Ruang kerja guru — ESAINA" };
 
@@ -19,7 +21,7 @@ export default async function TeacherHome() {
           <h1 className="text-3xl font-semibold text-primary">Ruang kerja guru</h1>
           <p className="text-sm text-muted-foreground">Halo, {session.user.name}.</p>
         </div>
-        <LogoutButton />
+          <div className="flex items-center gap-2"><Button asChild variant="outline" size="sm"><Link href="/guru/grading">Penilaian</Link></Button><LogoutButton /></div>
       </header>
       <ClassList />
       <AssessmentBuilder />
