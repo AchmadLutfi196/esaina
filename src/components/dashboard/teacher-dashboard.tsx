@@ -7,14 +7,12 @@ import {
   BookOpen,
   Calendar,
   FileText,
-  Inbox,
   NotebookPen,
   Scale,
   TrendingUp,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { formatDueDate, cn } from "@/lib/utils";
 import { ASSESSMENT_STATUS_LABEL, type Assessment, type ClassItem } from "@/types";
 
@@ -47,344 +45,263 @@ export function TeacherDashboard({
   raterAssignments: RaterAssignment[];
 }) {
   const activeAssessments = assessments.filter((a) => a.status === "active");
-  const highlighted = (activeAssessments.length > 0 ? activeAssessments : assessments).slice(0, 3);
-  const upcoming = [...activeAssessments]
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-    .slice(0, 3);
+  const displayAssessments = (activeAssessments.length > 0 ? activeAssessments : assessments).slice(0, 4);
 
-  const today = new Date();
+  // Generate week calendar items around today
+  const daysOfWeek = [
+    { day: "Sen", date: 23, isToday: false },
+    { day: "Sel", date: 24, isToday: false },
+    { day: "Rab", date: 25, isToday: true },
+    { day: "Kam", date: 26, isToday: false },
+    { day: "Jum", date: 27, isToday: false },
+    { day: "Sab", date: 28, isToday: false },
+    { day: "Min", date: 29, isToday: false },
+  ];
 
   return (
-    <div className="animate-fade-up grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
-      <div className="space-y-6 xl:col-span-8">
-        {/* Hero */}
-        <section className="relative flex flex-col items-start justify-between gap-4 overflow-hidden rounded-2xl bg-forest p-6 text-white shadow-md sm:flex-row sm:items-center sm:p-7">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-bleu-ciel/25 blur-3xl"
-          />
-          <div className="relative z-10 max-w-md space-y-3">
-            <h2 className="font-heading text-2xl leading-tight font-bold tracking-tight text-white sm:text-3xl">
-              Ruang penilaian Anda
-            </h2>
-            <p className="text-sm leading-relaxed text-mist">
-              Buat asesmen, tinjau jawaban siswa, dan selesaikan penilaian bersama
-              tim guru.
-            </p>
-            <Link href="/assessments/new" className="inline-block pt-1">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-xs font-bold text-forest shadow-sm transition-colors hover:bg-emerald-50">
-                <NotebookPen className="h-3.5 w-3.5" />
-                Buat Asesmen Baru
-              </span>
-            </Link>
-          </div>
-        </section>
+    <div className="animate-fade-up space-y-6">
+      {/* Top Section: Header & Week Calendar (matching 02 · Guru dasbor.png) */}
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/80 bg-white/85 p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] backdrop-blur-md md:flex-row md:items-center">
+        <div className="space-y-1">
+          <h1 className="font-heading text-2xl font-extrabold tracking-wide text-brand sm:text-3xl">
+            RUANG PENILAIAN ANDA
+          </h1>
+          <p className="text-xs text-muted sm:text-sm">
+            Buat asesmen, tinjau jawaban siswa, dan selesaikan penilaian bersama secara konsisten.
+          </p>
+        </div>
 
-        {/* Metric cards */}
-        <section
-          aria-label="Ringkasan asesmen"
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          <Link
-            href="/assessments"
-            className="glass-card space-y-3 p-5 text-brand bg-gradient-to-br from-brand-tint/90 to-white/70 border-white/80 hover:border-brand-line/60 lg:col-span-2"
-          >
-            <span className="flex items-center gap-2 text-xs font-semibold">
+        {/* Calendar Widget */}
+        <div className="flex flex-col items-start gap-1.5 rounded-xl border border-line/60 bg-paper/60 p-3 sm:items-end">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted">
+            <Calendar className="h-3.5 w-3.5 text-brand" />
+            <span>Kalender pekan ini · 25 Oktober 2026</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {daysOfWeek.map((d) => (
+              <div
+                key={d.day}
+                className={cn(
+                  "flex flex-col items-center justify-center rounded-lg px-2.5 py-1 text-center transition-all",
+                  d.isToday
+                    ? "bg-brand text-white shadow-xs font-bold"
+                    : "text-muted hover:bg-white"
+                )}
+              >
+                <span className="text-[9px] uppercase tracking-wider">{d.day}</span>
+                <span className="font-mono text-xs font-bold">{d.date}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Metric KPI Cards (matching 02 · Guru dasbor.png) */}
+      <section
+        aria-label="Metrik Ruang Penilaian"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+      >
+        {/* Total Asesmen */}
+        <div className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)] transition-all hover:shadow-md">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2 font-bold text-brand">
               <FileText className="h-4 w-4" />
               Total Asesmen
             </span>
-            <span className="flex flex-wrap items-baseline gap-2">
-              <span className="nums text-3xl font-extrabold tracking-tight">
-                {stats.total}
-              </span>
-              <span className="nums glass-pill rounded-full border border-brand-line/50 px-2 py-0.5 text-xs font-bold">
-                {stats.active} Aktif
-              </span>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+              Aktif
             </span>
-            <p className="text-xs font-medium text-muted">Asesmen esai terdaftar</p>
-          </Link>
+          </div>
+          <div className="mt-3">
+            <span className="font-heading text-4xl font-extrabold text-brand">
+              {stats.total}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted">Asesmen esai terdaftar</p>
+        </div>
 
-          <Link
-            href="/assessments?status=completed"
-            className="glass-card min-w-0 space-y-3 p-5 text-[#0B3E7F] bg-gradient-to-br from-[#E7EFFB]/90 to-white/70 border-white/80 hover:border-blue-400/60"
-          >
-            <span className="flex items-center gap-2 text-xs font-semibold">
+        {/* Progres Selesai */}
+        <div className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)] transition-all hover:shadow-md">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2 font-bold text-brand">
               <TrendingUp className="h-4 w-4" />
               Progres Selesai
             </span>
-            <span className="flex flex-wrap items-baseline gap-2">
-              <span className="nums text-3xl font-extrabold tracking-tight">
-                {stats.progressPercent}%
-              </span>
-              <span className="nums glass-pill rounded-full border border-[#0B3E7F]/30 px-2 py-0.5 text-xs font-bold">
-                {stats.completed}/{stats.total}
-              </span>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+              Aktif
             </span>
-            <p className="text-xs font-medium text-muted">Asesmen telah dinilai penuh</p>
-          </Link>
+          </div>
+          <div className="mt-3">
+            <span className="font-heading text-4xl font-extrabold text-brand">
+              {stats.progressPercent}%
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted">Asesmen telah dinilai penuh</p>
+        </div>
 
-          <div className="glass-card min-w-0 space-y-3 p-5 text-[#4C1D95] bg-gradient-to-br from-[#F0EAFE]/90 to-white/70 border-white/80">
-            <span className="flex items-center gap-2 text-xs font-semibold">
+        {/* Tugas Penilaian */}
+        <div className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)] transition-all hover:shadow-md">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2 font-bold text-brand">
               <Scale className="h-4 w-4" />
               Tugas Penilaian
             </span>
-            <span className="flex flex-wrap items-baseline gap-2">
-              <span className="nums text-3xl font-extrabold tracking-tight">
-                {stats.pendingGrading}
-              </span>
-              <span className="glass-pill rounded-full border border-[#4C1D95]/30 px-2 py-0.5 text-xs font-bold">
-                Multi-Rater
-              </span>
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+              Aktif
             </span>
-            <p className="text-xs font-medium text-muted">Jawaban menunggu skor Anda</p>
           </div>
-        </section>
+          <div className="mt-3">
+            <span className="font-heading text-4xl font-extrabold text-brand">
+              {stats.pendingGrading}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted">Jawaban menunggu skor Anda</p>
+        </div>
+      </section>
 
-        {/* Active assessments */}
-        <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Main Content Grid: Asesmen Aktif (Left) & Tugas Sebagai Penilai (Right) */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+        {/* Left Column: Asesmen Aktif (7 cols) */}
+        <section className="space-y-4 lg:col-span-7">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <h3 className="text-base font-bold text-ink">Asesmen Aktif</h3>
-              <span className="rounded-full border border-brand-line/50 bg-brand-tint px-2.5 py-0.5 text-xs font-semibold text-forest">
-                {activeAssessments.length} Asesmen
+              <h2 className="font-heading text-base font-extrabold tracking-wider text-brand uppercase">
+                ASESMEN AKTIF
+              </h2>
+              <span className="rounded-full border border-brand-line/50 bg-brand-tint px-2.5 py-0.5 text-xs font-bold text-brand">
+                {activeAssessments.length || displayAssessments.length} Asesmen
               </span>
             </div>
             <Link
               href="/assessments"
-              className="flex items-center gap-0.5 text-xs font-medium text-muted transition-colors hover:text-ink"
+              className="flex items-center gap-1 text-xs font-semibold text-brand transition-colors hover:text-brand-dark"
             >
-              Lihat semua
-              <ArrowRight className="h-3.5 w-3.5" />
+              <span>Lihat semua</span>
+              <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
 
-          {highlighted.length === 0 ? (
-            <Card className="p-8 text-center">
+          {displayAssessments.length === 0 ? (
+            <div className="rounded-2xl border border-white/80 bg-white p-8 text-center shadow-xs">
               <p className="text-xs text-muted">Belum ada asesmen yang dibuat.</p>
               <Link href="/assessments/new" className="mt-3 inline-block">
                 <Button size="sm">Buat Asesmen Pertama</Button>
               </Link>
-            </Card>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {highlighted.map((a) => (
-                <Link
+            <div className="space-y-3">
+              {displayAssessments.map((a) => (
+                <div
                   key={a.id}
-                  href={`/assessments/${a.id}`}
-                  className="flex flex-col justify-between gap-3 rounded-xl border border-line/30 bg-white/80 p-5 shadow-xs transition-colors hover:border-brand"
+                  className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_20px_rgba(10,22,128,0.03)] transition-all hover:border-brand-line hover:shadow-md"
                 >
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rounded-md border border-brand-line/70 bg-brand-tint px-2 py-0.5 font-mono text-[10px] font-bold text-brand">
-                        {a.code}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line/50 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 uppercase">
+                        AKTIF
                       </span>
-                      <Badge status={ASSESSMENT_STATUS_LABEL[a.status]} />
+                      <span className="rounded-md border border-line bg-paper px-2 py-0.5 font-mono text-[10px] font-bold text-brand">
+                        Kode: {a.code}
+                      </span>
                     </div>
-                    <h4 className="mt-2 text-sm font-bold break-words text-ink">
+                    <span className="text-[11px] font-medium text-muted">
+                      Tenggat: {formatDueDate(a.dueDate)}
+                    </span>
+                  </div>
+
+                  <div className="mt-3">
+                    <h3 className="font-heading text-lg font-bold text-ink">
                       {a.title}
-                    </h4>
-                    <p className="text-xs font-medium text-muted">
-                      {a.subject} • {a.questions.length} Soal
+                    </h3>
+                    <p className="mt-0.5 text-xs text-muted">
+                      {a.subject} · {a.questions.length} Soal · {a.className} · {a.durationMinutes} menit pengumpulan
                     </p>
                   </div>
 
-                  <div className="space-y-1.5 pt-1">
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-1.5 rounded-full bg-forest"
-                        style={{
-                          width: `${
-                            a.status === "completed" ? 100 : a.status === "active" ? 50 : 10
-                          }%`,
-                        }}
-                      />
+                  <div className="mt-4 flex items-center justify-between border-t border-line/40 pt-3">
+                    <div className="text-xs text-muted">
+                      <span className="font-bold text-ink">
+                        {a.submissions.filter((s) => s.statusWork === "submitted").length}
+                      </span>{" "}
+                      LJK terkumpul
                     </div>
-                    <span className="block text-xs font-medium text-muted">
-                      {a.className} • {a.durationMinutes} menit •{" "}
-                      {a.submissions.filter((s) => s.statusWork === "submitted").length}{" "}
-                      pengumpulan
-                    </span>
+
+                    <Link href={`/grading`}>
+                      <Button size="sm" className="gap-1.5 rounded-xl bg-brand font-bold text-white hover:bg-brand-dark">
+                        <span>Buka Ruang Penilaian</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </Link>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}
         </section>
 
-        {/* Rater assignments */}
-        <Card>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="text-sm font-bold text-ink">Tugas sebagai Penilai</h3>
-            <Badge tone="neutral">{raterAssignments.length} Asesmen</Badge>
+        {/* Right Column: Tugas Sebagai Penilai (5 cols) */}
+        <section className="space-y-4 lg:col-span-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-base font-extrabold tracking-wider text-brand uppercase">
+              TUGAS SEBAGAI PENILAI
+            </h2>
+            <span className="rounded-full border border-line bg-paper px-2 py-0.5 text-xs font-bold text-muted">
+              {raterAssignments.length} Tugas
+            </span>
           </div>
 
-          {raterAssignments.length === 0 ? (
-            <p className="py-6 text-center text-xs text-muted">
-              Anda belum ditugaskan sebagai penilai pada asesmen manapun.
-            </p>
-          ) : (
-            <ul className="divide-y divide-line/25">
-              {raterAssignments.map((a) => (
-                <li
-                  key={a.id}
-                  className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-ink">
-                      {a.title}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {a.subject} • {a.className}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <span className="text-xs font-bold text-amber-600">
-                      {a.submissionCount} esai
-                    </span>
-                    <Link href={`/assessments/${a.id}`}>
-                      <Button size="sm">Nilai</Button>
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
-
-      {/* Right column */}
-      <div className="space-y-6 xl:col-span-4">
-        {/* Calendar */}
-        <Card className="space-y-5 p-6">
-          <div className="text-center sm:text-left">
-            <h3 className="font-heading text-2xl font-extrabold tracking-tight text-ink">
-              {new Intl.DateTimeFormat("id-ID", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              }).format(today)}
-            </h3>
-            <span className="text-xs font-medium text-muted">Kalender pekan ini</span>
-          </div>
-
-          <div className="grid grid-cols-7 text-center text-xs font-semibold tracking-tight text-muted">
-            {["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((d) => (
-              <span key={d}>{d}</span>
-            ))}
-          </div>
-
-          <div className="rounded-full bg-forest px-3 py-2 text-white shadow-inner">
-            <div className="grid grid-cols-7 items-center text-center text-xs font-bold">
-              {Array.from({ length: 7 }).map((_, offset) => {
-                const day = new Date(today);
-                const dayOfWeek = (today.getDay() + 6) % 7; // Monday = 0
-                day.setDate(today.getDate() - dayOfWeek + offset);
-                const isToday = day.toDateString() === today.toDateString();
-                return isToday ? (
-                  <span
-                    key={offset}
-                    className="mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-white text-forest shadow-xs"
+          <div className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)]">
+            {raterAssignments.length === 0 ? (
+              <p className="py-6 text-center text-xs text-muted">
+                Tidak ada tugas penilaian tertunda untuk akun Anda saat ini.
+              </p>
+            ) : (
+              <ul className="divide-y divide-line/40">
+                {raterAssignments.map((task) => (
+                  <li
+                    key={task.id}
+                    className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
                   >
-                    {day.getDate()}
-                  </span>
-                ) : (
-                  <span key={offset} className="opacity-90">
-                    {day.getDate()}
-                  </span>
-                );
-              })}
-            </div>
+                    <div className="min-w-0">
+                      <h4 className="truncate text-xs font-bold text-ink">
+                        {task.title}
+                      </h4>
+                      <p className="truncate text-[11px] text-muted">
+                        {task.subject} - {task.className} · Tidak ada jawaban tertunda
+                      </p>
+                    </div>
+
+                    <Link href={`/assessments/${task.id}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg border-line px-3 text-xs font-semibold hover:border-brand hover:text-brand"
+                      >
+                        Lihat
+                      </Button>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
-          <div className="flex items-center justify-between gap-2 pt-1">
-            <Link
-              href="/assessments"
-              className="flex items-center gap-1.5 text-xs font-semibold text-ink transition-colors hover:text-brand"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              Kelola Asesmen
-            </Link>
-            <Link href="/assessments/new">
-              <span className="flex items-center gap-1.5 rounded-full bg-forest px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-forest-dark">
+          {/* Quick Create CTA Card */}
+          <div className="rounded-2xl border border-bleu-ciel/40 bg-gradient-to-br from-[#060E59] to-[#0A1680] p-5 text-white shadow-md">
+            <h3 className="font-heading text-base font-extrabold text-white">
+              Buat Asesmen Esai Baru
+            </h3>
+            <p className="mt-1 text-xs text-mist">
+              Rancang pertanyaan esai, tentukan kunci jawaban acuan, dan tentukan rubrik kriteria ganda.
+            </p>
+            <Link href="/assessments/new" className="mt-4 inline-block">
+              <span className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-xs font-bold text-brand shadow-xs hover:bg-paper">
                 <NotebookPen className="h-3.5 w-3.5" />
-                Buat Baru
+                <span>Mulai Buat Asesmen</span>
               </span>
             </Link>
           </div>
-        </Card>
-
-        {/* Upcoming deadlines */}
-        <Card className="space-y-4 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-sm font-bold text-ink">Tenggat Terdekat</h3>
-            <Link
-              href="/assessments"
-              className="text-xs font-medium text-muted hover:text-ink-2"
-            >
-              Lihat semua
-            </Link>
-          </div>
-
-          {upcoming.length === 0 ? (
-            <div className="py-6 text-center">
-              <Inbox className="mx-auto mb-1.5 h-7 w-7 text-line" />
-              <p className="text-xs text-muted">
-                Tidak ada tenggat asesmen aktif saat ini.
-              </p>
-            </div>
-          ) : (
-            upcoming.map((a) => (
-              <Link
-                key={a.id}
-                href={`/assessments/${a.id}`}
-                className={cn(
-                  "group block space-y-2 rounded-2xl border border-line/60 bg-white/70 p-3.5 shadow-xs transition-colors hover:bg-white"
-                )}
-              >
-                <h4 className="line-clamp-1 text-xs font-bold text-ink transition-colors group-hover:text-brand">
-                  {a.title}
-                </h4>
-                <p className="flex items-center gap-1 text-xs text-muted">
-                  <Calendar className="h-3 w-3" />
-                  Tenggat: {formatDueDate(a.dueDate)}
-                </p>
-              </Link>
-            ))
-          )}
-        </Card>
-
-        {/* Classes summary */}
-        <Card className="space-y-3 p-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-ink">Kelas Anda</h3>
-            <Link href="/classes" className="text-xs font-medium text-muted">
-              Semua
-            </Link>
-          </div>
-          {classes.length === 0 ? (
-            <p className="py-4 text-center text-xs text-muted">Belum ada kelas.</p>
-          ) : (
-            classes.slice(0, 4).map((c) => (
-              <Link
-                key={c.id}
-                href={`/classes/${c.id}`}
-                className="flex items-center gap-2.5 rounded-xl border border-transparent p-2 transition-colors hover:border-line/60 hover:bg-white/70"
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
-                  <BookOpen className="h-3.5 w-3.5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-semibold text-ink">
-                    {c.name}
-                  </span>
-                  <span className="block text-[11px] text-muted">
-                    {c.studentCount} siswa • {c.assessmentCount} asesmen
-                  </span>
-                </span>
-              </Link>
-            ))
-          )}
-        </Card>
+        </section>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useActionState } from "react";
-import { ArrowRight, GraduationCap, Lock, Mail, Shield, User } from "lucide-react";
+import React, { useActionState, useState } from "react";
+import { ArrowRight, Check, GraduationCap, Lock, Mail, Shield, User, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Field } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -10,196 +10,219 @@ import { loginWithCredentials } from "@/app/(auth)/login/actions";
 const DEMO_ACCOUNTS = [
   {
     email: "teacher1@example.com",
-    label: "Guru 1 (Lead)",
+    name: "Dra. Sri Wahyuni, M.Pd.",
+    role: "Guru 1 (Lead)",
+    desc: "Biologi & Kimia (Penilai Utama)",
     icon: User,
-    tone: "text-emerald-600",
+    badge: "Guru Lead",
+    badgeClass: "bg-bleu-ciel/25 text-brand border-bleu-ciel/60",
+  },
+  {
+    email: "teacher2@example.com",
+    name: "Budi Santoso, S.Pd.",
+    role: "Guru 2 (Rater)",
+    desc: "Fisika & Matematika (Multi-Rater)",
+    icon: User,
+    badge: "Guru Rater",
+    badgeClass: "bg-brand-tint text-brand border-brand-line/60",
   },
   {
     email: "student1@example.com",
-    label: "Siswa (Peserta)",
+    name: "Aisyah Putri Rahmadani",
+    role: "Siswa Peserta",
+    desc: "XI MIPA 1 (Mengerjakan Ujian)",
     icon: GraduationCap,
-    tone: "text-amber-600",
+    badge: "Siswa Ujian",
+    badgeClass: "bg-butter-yellow text-brand border-orange-pastel",
   },
   {
     email: "admin@example.com",
-    label: "Admin",
+    name: "Administrator Sekolah",
+    role: "Admin Sekolah",
+    desc: "Manajemen Akun & Monitoring",
     icon: Shield,
-    tone: "text-purple-500",
+    badge: "Admin",
+    badgeClass: "bg-purple-100 text-purple-900 border-purple-300",
   },
 ] as const;
 
 export function LoginForm() {
-  const [email, setEmail] = React.useState("teacher1@example.com");
-  const [password, setPassword] = React.useState("password");
+  const [email, setEmail] = useState("teacher1@example.com");
+  const [password, setPassword] = useState("password");
+  const [activeTab, setActiveTab] = useState<string>("teacher1@example.com");
   const [state, formAction, isPending] = useActionState(loginWithCredentials, null);
 
-  const handleDemoSelect = (demoEmail: string) => {
-    setEmail(demoEmail);
+  const handleSelectDemo = (accEmail: string) => {
+    setActiveTab(accEmail);
+    setEmail(accEmail);
     setPassword("password");
   };
 
   return (
-    <div className="glass-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-[24px] border border-white/85 shadow-[0_24px_80px_rgba(10,22,128,0.14),inset_0_1px_2px_rgba(255,255,255,0.95)] md:flex-row">
-      {/* Hero panel */}
-      <div className="relative flex flex-col justify-between overflow-hidden bg-forest p-8 text-white sm:p-10 md:w-5/12">
+    <div className="glass-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-white/85 shadow-[0_24px_80px_rgba(10,22,128,0.16),inset_0_1px_2px_rgba(255,255,255,0.95)] md:flex-row">
+      {/* Hero Panel (Left) */}
+      <div className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#060E59] via-[#0A1680] to-[#0A1680] p-8 text-white sm:p-10 md:w-5/12">
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-bleu-ciel/25 blur-3xl"
+          className="pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-bleu-ciel/20 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-20 -left-12 h-52 w-52 rounded-full bg-butter-yellow/20 blur-3xl"
+          className="pointer-events-none absolute -bottom-20 -left-12 h-60 w-60 rounded-full bg-butter-yellow/15 blur-3xl"
         />
 
         <div className="relative z-10 space-y-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10 shadow-md">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              className="h-7 w-7"
-              aria-hidden="true"
-            >
-              <rect x="4" y="4" width="7" height="7" rx="3" fill="#93B2F8" />
-              <rect x="13" y="4" width="7" height="7" rx="3" fill="#FBEDB0" />
-              <rect x="4" y="13" width="7" height="7" rx="3" fill="#F1B94C" />
-              <rect x="13" y="13" width="7" height="7" rx="3" fill="#FCFDFF" />
-            </svg>
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10 shadow-lg backdrop-blur-md">
+            <span className="font-heading text-xl font-extrabold text-white">E</span>
           </div>
 
-          <h1 className="font-heading text-2xl leading-snug font-extrabold tracking-tight sm:text-3xl">
-            Platform Penilaian Esai Multi-Rater
-          </h1>
-          <p className="text-sm leading-relaxed text-mist">
-            Sistem asesmen esai kolaboratif terintegrasi dengan rubrik transparan,
-            verifikasi konsensus multi-penilai, dan analitik AI IndoBERT.
+          <div>
+            <span className="inline-block rounded-full border border-bleu-ciel/40 bg-white/10 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-bleu-ciel">
+              INCEPTION 2026 • Kopsudomar
+            </span>
+            <h1 className="mt-2 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
+              ESAINA
+            </h1>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-bleu-ciel">
+              Explainable Essay Assessment Platform
+            </p>
+          </div>
+
+          <p className="text-xs leading-relaxed text-mist/90 sm:text-sm">
+            Platform evaluasi esai akademik yang memadukan objektivitas rubrik kriteria ganda dengan analisis semantik NLP IndoBERT.
           </p>
         </div>
 
-        <div className="relative z-10 mt-10 space-y-3">
-          <div className="rounded-xl border border-white/15 bg-white/5 p-3">
-            <p className="text-[11px] leading-relaxed text-mist">
-              <span className="font-bold text-white">Explainable by design.</span>{" "}
-              Setiap skor dapat ditelusuri: kriteria rubrik, kutipan bukti, dan
-              rekomendasi mesin tersimpan bersama nilainya.
+        <div className="relative z-10 mt-8 space-y-2.5">
+          <div className="rounded-xl border border-white/15 bg-white/5 p-3 backdrop-blur-xs">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+              <Sparkles className="h-3.5 w-3.5 text-butter-yellow" />
+              <span>Explainable by Design</span>
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-mist">
+              Rekomendasi nilai mesin selalu menyertakan kutipan bukti teks siswa, pemetaan rubrik, dan transparansi jejak audit.
             </p>
           </div>
-        </div>
-
-        <div className="relative z-10 mt-8 flex items-center justify-between border-t border-white/10 pt-4 text-xs text-mist">
-          <span>Kurikulum &amp; Penilaian Mandiri</span>
-          <span className="font-semibold text-emerald-300">Versi 2.0</span>
+          <div className="flex items-center justify-between border-t border-white/10 pt-3 text-[11px] text-mist">
+            <span>Standar Desain Bleu Océan</span>
+            <span className="font-bold text-emerald-300">WCAG AAA Compliance</span>
+          </div>
         </div>
       </div>
 
-      {/* Form panel */}
-      <div className="flex flex-1 flex-col justify-between gap-6 p-6 sm:p-10 md:w-7/12">
-        <div className="space-y-2">
-          <span className="inline-block rounded-full border border-brand-line/70 bg-brand-tint px-3 py-1 text-xs font-semibold text-brand">
-            Masuk Akun
-          </span>
-          <h2 className="text-2xl font-bold text-ink">Pilih Akun Sesuai Peran</h2>
-          <p className="text-xs text-muted">
-            Silakan masukkan kredensial atau klik salah satu akun demo untuk
-            mengisi formulir secara otomatis.
-          </p>
-        </div>
+      {/* Form Panel (Right) */}
+      <div className="flex flex-1 flex-col justify-between gap-6 p-6 sm:p-10 md:w-7/12 bg-white/95 backdrop-blur-xl">
+        <div className="space-y-4">
+          <div>
+            <span className="inline-block rounded-full border border-brand-line bg-brand-tint px-3 py-0.5 text-xs font-extrabold text-brand">
+              Akses Cepat Demo
+            </span>
+            <h2 className="mt-2 text-xl font-bold tracking-tight text-ink sm:text-2xl">
+              Pilih Akun Sesuai Peran
+            </h2>
+            <p className="text-xs text-muted">
+              Pilih salah satu profil di bawah untuk mengisi kredensial demo secara instan.
+            </p>
+          </div>
 
-        <div className="space-y-2">
-          <span className="block text-xs font-bold tracking-wider text-muted uppercase">
-            Pilih Cepat Akun Demo
-          </span>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {DEMO_ACCOUNTS.map(({ email: demoEmail, label, icon: Icon, tone }) => {
-              const selected = email === demoEmail;
+          {/* Quick Demo Role Cards Grid */}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {DEMO_ACCOUNTS.map((acc) => {
+              const Icon = acc.icon;
+              const isSelected = activeTab === acc.email;
               return (
                 <button
-                  key={demoEmail}
+                  key={acc.email}
                   type="button"
-                  onClick={() => handleDemoSelect(demoEmail)}
-                  aria-pressed={selected}
+                  onClick={() => handleSelectDemo(acc.email)}
                   className={cn(
-                    "flex cursor-pointer flex-col justify-between rounded-2xl border p-3 text-left transition-all duration-200",
-                    selected
-                      ? "border-forest bg-forest text-white shadow-md shadow-forest/20"
-                      : "border-white/80 bg-white/70 text-ink-2 hover:bg-white hover:border-brand-line/50 hover:shadow-xs backdrop-blur-sm"
+                    "flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-left transition-all",
+                    isSelected
+                      ? "border-brand bg-brand-tint/60 ring-2 ring-brand/20 shadow-xs"
+                      : "border-line bg-white/70 hover:border-brand-line hover:bg-white"
                   )}
                 >
-                  <span className="mb-1 flex items-center gap-1.5 text-xs font-bold">
-                    <Icon className={cn("h-3.5 w-3.5", selected ? "text-white" : tone)} />
-                    <span>{label}</span>
-                  </span>
-                  <span
-                    className={cn(
-                      "truncate text-[11px]",
-                      selected ? "text-emerald-200" : "text-muted"
-                    )}
-                  >
-                    {demoEmail}
-                  </span>
+                  <div className={cn(
+                    "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                    isSelected ? "bg-brand text-white" : "bg-paper text-muted"
+                  )}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="truncate text-xs font-bold text-ink">
+                        {acc.role}
+                      </span>
+                      {isSelected && <Check className="h-3.5 w-3.5 text-brand shrink-0" />}
+                    </div>
+                    <p className="truncate text-[11px] font-medium text-brand">
+                      {acc.name}
+                    </p>
+                    <p className="truncate text-[10px] text-muted">
+                      {acc.desc}
+                    </p>
+                  </div>
                 </button>
               );
             })}
           </div>
+
+          {/* Form */}
+          <form action={formAction} className="space-y-3.5 pt-2 border-t border-line/60">
+            {state?.error && (
+              <div
+                role="alert"
+                className="rounded-xl border border-rose-300 bg-rose-50 p-2.5 text-xs font-semibold text-rose-800"
+              >
+                ⚠️ {state.error}
+              </div>
+            )}
+
+            <Field label="Alamat Email Terdaftar">
+              <div className="relative">
+                <Mail className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted" />
+                <Input
+                  type="email"
+                  name="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nama@sekolah.sch.id"
+                  className="pl-9"
+                />
+              </div>
+            </Field>
+
+            <Field label="Kata Sandi">
+              <div className="relative">
+                <Lock className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted" />
+                <Input
+                  type="password"
+                  name="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Kata sandi akun"
+                  className="pl-9"
+                />
+              </div>
+            </Field>
+
+            <Button
+              type="submit"
+              loading={isPending}
+              className="mt-2 w-full gap-2 font-bold shadow-md"
+            >
+              <span>Masuk ke Ruang Kerja</span>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </form>
         </div>
 
-        {state?.error && (
-          <div
-            role="alert"
-            className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2.5 text-[11px] font-medium text-rose-700"
-          >
-            {state.error}
-          </div>
-        )}
-
-        <form action={formAction} className="space-y-4">
-          <Field label="Email" htmlFor="email" required>
-            <div className="relative">
-              <Mail className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-muted" />
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autoComplete="username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Masukkan alamat email…"
-                className="pl-10 text-base"
-              />
-            </div>
-          </Field>
-
-          <Field label="Password" htmlFor="password" required>
-            <div className="relative">
-              <Lock className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-muted" />
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Masukkan password…"
-                className="pl-10 text-base"
-              />
-            </div>
-          </Field>
-
-          <Button
-            type="submit"
-            size="lg"
-            loading={isPending}
-            className="w-full"
-          >
-            <span>Masuk ke Dasbor</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </form>
-
-        <p className="pt-2 text-center text-xs text-muted">
-          SMP / SMA Negeri • Sistem Penilaian Mandiri &amp; Kolaboratif
-        </p>
+        <div className="rounded-xl border border-line/60 bg-paper/60 p-2.5 text-center text-[11px] text-muted">
+          Kata sandi seluruh akun demo disetel ke:{" "}
+          <strong className="text-brand font-mono font-bold">password</strong>
+        </div>
       </div>
     </div>
   );

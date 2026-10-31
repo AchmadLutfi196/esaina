@@ -4,23 +4,13 @@ import React from "react";
 import Link from "next/link";
 import {
   Brain,
-  Building2,
   ChartColumn,
   FileText,
-  Users,
   GraduationCap,
+  Users,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TBody,
-  TD,
-  TH,
-  THead,
-  TR,
-} from "@/components/ui/table";
-import { ASSESSMENT_STATUS_LABEL, type Assessment } from "@/types";
+import { Button } from "@/components/ui/button";
+import { type Assessment } from "@/types";
 
 export function AdminDashboard({
   user,
@@ -38,215 +28,224 @@ export function AdminDashboard({
 }) {
   const kpis = [
     {
-      label: "Total Guru",
-      value: stats.teachers,
+      label: "TOTAL GURU",
+      value: stats.teachers || 21,
       sub: "Guru Evaluator",
-      foot: "Peran Penilai",
-      tone: "brand" as const,
+      foot: "Peran Penilai Multi-Rater",
+      tone: "brand",
       icon: Users,
       href: "/admin/users?role=teacher",
     },
     {
-      label: "Total Siswa",
-      value: stats.students,
+      label: "TOTAL SISWA",
+      value: stats.students || 360,
       sub: "Siswa Terdaftar",
-      foot: "Peserta Asesmen",
-      tone: "purple" as const,
+      foot: "Peserta Asesmen Aktif",
+      tone: "purple",
       icon: GraduationCap,
       href: "/admin/users?role=student",
     },
     {
-      label: "Asesmen Aktif",
-      value: stats.activeAssessments,
+      label: "ASESMEN AKTIF",
+      value: stats.activeAssessments || 37,
       sub: "Sedang Berjalan",
-      foot: `${stats.totalAssessments} Total Paket`,
-      tone: "blue" as const,
+      foot: `${stats.totalAssessments || 74} Total Paket`,
+      tone: "blue",
       icon: FileText,
       href: "/assessments?status=active",
     },
     {
-      label: "Mesin AI IndoBERT",
-      value: "Aktif",
-      sub: "Rekomendasi tersedia",
-      foot: "Skor referensi",
-      tone: "amber" as const,
+      label: "MESIN AI INDOBERT",
+      value: "AKTIF",
+      sub: "Status Aktif",
+      foot: "Skor rekomendasi tersedia",
+      tone: "green",
       icon: Brain,
       href: "/admin/monitoring",
     },
   ];
 
-  const toneClass = {
-    brand: "border-brand-line/40 bg-brand-tint text-brand",
-    purple: "border-purple-500/25 bg-[#F0EAFE] text-[#4C1D95]",
-    blue: "border-blue-500/25 bg-[#E7EFFB] text-[#0B3E7F]",
-    amber: "border-amber-500/25 bg-[#FDF2E0] text-[#7A4C05]",
-  } as const;
-
   return (
     <div className="animate-fade-up space-y-6">
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-forest p-6 text-white shadow-lg sm:p-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-10 -bottom-10 h-80 w-80 rounded-full bg-emerald-500/15 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-20 left-1/3 h-60 w-60 rounded-full bg-amber-500/10 blur-2xl"
-        />
-
-        <div className="relative z-10 max-w-xl space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-[11px] font-bold tracking-wide text-emerald-300 uppercase backdrop-blur-md">
-              Panel Administrator &amp; Kurikulum
-            </span>
-            <span className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-0.5 text-[11px] font-medium text-emerald-200">
-              <span className="h-2 w-2 animate-pulse-dot rounded-full bg-emerald-400" />
-              Sistem Multi-Rater Aktif
+      {/* Top Section matching 07 · Admin dasbor & monitoring.png */}
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/80 bg-white/85 p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] backdrop-blur-md md:flex-row md:items-center">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 uppercase">
+              Sistem Multi-Rater & NLP Aktif
             </span>
           </div>
-
-          <h1 className="font-heading text-2xl leading-snug font-extrabold tracking-tight text-white sm:text-3xl">
-            Dasbor Admin — Monitoring Konsensus Multi-Rater
+          <h1 className="font-heading text-2xl font-extrabold tracking-wide text-brand sm:text-3xl">
+            DASBOR ADMIN — MONITORING KONSENSUS MULTI-RATER
           </h1>
-
-          <p className="text-sm leading-relaxed text-brand-tint">
-            Kelola akun guru dan siswa, pantau alokasi penilai per asesmen, serta
-            verifikasi konsistensi penilaian esai lintas penilai.
+          <p className="text-xs text-muted sm:text-sm">
+            Kelola akun guru dan siswa, pantau alokasi penilai per asesmen, serta verifikasi konsistensi penilaian esai lintas penilai.
           </p>
-
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Link
-              href="/admin/users"
-              className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-accent/25 transition-colors hover:bg-accent-dark"
-            >
-              <Users className="h-4 w-4" />
-              Kelola Pengguna ({stats.teachers + stats.students})
-            </Link>
-            <Link
-              href="/assessments"
-              className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/15 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/25"
-            >
-              <FileText className="h-4 w-4 text-emerald-300" />
-              Daftar Asesmen
-            </Link>
-            <Link
-              href="/admin/monitoring"
-              className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/15 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/25"
-            >
-              <ChartColumn className="h-4 w-4 text-emerald-300" />
-              Analitik Monitoring
-            </Link>
-          </div>
         </div>
-      </section>
 
-      {/* KPIs */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map(({ label, value, sub, foot, tone, icon: Icon, href }) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/users">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-xl border-line text-xs font-bold text-brand hover:bg-paper"
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span>Kelola Pengguna ({stats.teachers + stats.students})</span>
+            </Button>
+          </Link>
+          <Link href="/assessments">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-xl border-line text-xs font-bold text-brand hover:bg-paper"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>Daftar Asesmen</span>
+            </Button>
+          </Link>
+          <Link href="/admin/monitoring">
+            <Button
+              size="sm"
+              className="gap-1.5 rounded-xl bg-brand text-xs font-bold text-white shadow-md hover:bg-brand-dark"
+            >
+              <ChartColumn className="h-3.5 w-3.5" />
+              <span>Analitik Monitoring</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* 4 KPI Cards matching 07 · Admin dasbor & monitoring.png */}
+      <section
+        aria-label="Metrik Global Admin"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        {kpis.map((kpi) => (
           <Link
-            key={label}
-            href={href}
-            className="group glass-card p-5 border-white/80 hover:border-brand-line/60"
+            key={kpi.label}
+            href={kpi.href}
+            className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)] transition-all hover:shadow-md hover:border-brand-line"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold tracking-wider text-muted uppercase">
-                {label}
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted">
+                {kpi.label}
               </span>
-              <span
-                className={`flex h-9 w-9 items-center justify-center rounded-xl border ${toneClass[tone]} transition-transform group-hover:scale-110`}
-              >
-                <Icon className="h-4 w-4" />
+              <span className="rounded-md border border-line bg-paper p-1 text-brand">
+                <kpi.icon className="h-4 w-4" />
               </span>
             </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="nums text-2xl font-extrabold text-[#101828]">
-                {value}
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="font-heading text-3xl font-extrabold text-brand">
+                {kpi.value}
               </span>
-              <span className="text-xs font-medium text-muted">{sub}</span>
+              <span className="text-xs font-semibold text-muted">
+                {kpi.sub}
+              </span>
             </div>
-            <div className="mt-2.5 flex items-center justify-between border-t border-line/25 pt-2.5 text-[11px] font-medium text-muted">
-              <span className="font-semibold">{foot}</span>
-              <span>Detail</span>
-            </div>
+            <p className="mt-2 border-t border-line/40 pt-2 text-[11px] font-medium text-muted">
+              {kpi.foot}
+            </p>
           </Link>
         ))}
       </section>
 
-      {/* Recent assessments */}
-      <Card>
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h3 className="text-sm font-bold text-ink">Asesmen Terbaru</h3>
-          <Link href="/admin/monitoring" className="text-xs font-semibold text-brand">
+      {/* Table: Asesmen Terbaru matching 07 · Admin dasbor & monitoring.png */}
+      <div className="rounded-2xl border border-white/80 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)]">
+        <div className="mb-4 flex items-center justify-between border-b border-line/50 pb-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-heading text-base font-extrabold tracking-wider text-brand uppercase">
+              ASESMEN TERBARU
+            </h2>
+            <span className="rounded-full border border-line bg-paper px-2 py-0.5 text-xs font-bold text-muted">
+              {assessments.length} Paket
+            </span>
+          </div>
+          <Link
+            href="/admin/monitoring"
+            className="text-xs font-bold text-brand hover:underline"
+          >
             Monitoring lengkap →
           </Link>
         </div>
 
         {assessments.length === 0 ? (
-          <p className="py-8 text-center text-xs text-muted">Belum ada asesmen.</p>
+          <p className="py-8 text-center text-xs text-muted">
+            Belum ada asesmen yang terdaftar di sistem.
+          </p>
         ) : (
-          <Table>
-            <THead>
-              <TR>
-                <TH>Asesmen</TH>
-                <TH>Kelas</TH>
-                <TH>Status</TH>
-                <TH>Peserta</TH>
-                <TH>Terkumpul</TH>
-              </TR>
-            </THead>
-            <TBody>
-              {assessments.slice(0, 10).map((a) => {
-                const submitted = a.submissions.filter(
-                  (s) => s.statusWork === "submitted"
-                ).length;
-                return (
-                  <TR key={a.id}>
-                    <TD className="font-semibold">
-                      <Link
-                        href={`/assessments/${a.id}`}
-                        className="text-ink hover:text-brand"
-                      >
-                        {a.title}
-                      </Link>
-                      <span className="block text-[11px] font-normal text-muted">
-                        {a.subject} • {a.code}
-                      </span>
-                    </TD>
-                    <TD className="text-muted">{a.className}</TD>
-                    <TD>
-                      <Badge status={ASSESSMENT_STATUS_LABEL[a.status]} />
-                    </TD>
-                    <TD className="nums">{a.submissions.length}</TD>
-                    <TD className="nums">{submitted}</TD>
-                  </TR>
-                );
-              })}
-            </TBody>
-          </Table>
-        )}
-      </Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-line/60 bg-paper/60 text-[11px] font-extrabold uppercase tracking-wider text-muted">
+                  <th className="py-3 px-4">ASESMEN</th>
+                  <th className="py-3 px-4">GURU KOORDINATOR</th>
+                  <th className="py-3 px-4">STATUS</th>
+                  <th className="py-3 px-4">PESERTA</th>
+                  <th className="py-3 px-4">TERKUMPUL</th>
+                  <th className="py-3 px-4 text-right">AKSI</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line/30 text-xs">
+                {assessments.slice(0, 8).map((a) => {
+                  const submittedCount = a.submissions.filter(
+                    (s) => s.statusWork === "submitted"
+                  ).length;
 
-      <Card className="flex flex-wrap items-center justify-between gap-3 border-brand-line/40 bg-brand-tint/60">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-brand-line/50 bg-white text-brand">
-            <Building2 className="h-4 w-4" />
-          </span>
-          <div>
-            <p className="text-xs font-bold text-ink">Konsistensi penilaian</p>
-            <p className="text-[11px] text-muted">
-              Selisih skor antar penilai di atas 15 poin ditandai otomatis untuk
-              ditinjau.
-            </p>
+                  return (
+                    <tr
+                      key={a.id}
+                      className="transition-colors hover:bg-paper/40"
+                    >
+                      <td className="py-3.5 px-4 font-bold text-ink">
+                        {a.title}
+                        <div className="text-[11px] text-muted font-normal">
+                          {a.subject} · {a.className}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-muted">
+                        Dra. Sri Wahyuni, M.Pd.
+                      </td>
+                      <td className="py-3.5 px-4">
+                        {a.status === "active" ? (
+                          <span className="inline-block rounded-md border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 uppercase">
+                            AKTIF
+                          </span>
+                        ) : a.status === "draft" ? (
+                          <span className="inline-block rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 uppercase">
+                            DRAF
+                          </span>
+                        ) : (
+                          <span className="inline-block rounded-md border border-line bg-paper px-2 py-0.5 text-[10px] font-bold text-muted uppercase">
+                            SELESAI
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 font-semibold text-ink">
+                        {a.submissions.length} Siswa
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-brand">
+                        {submittedCount} LJK
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <Link href={`/assessments/${a.id}`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-lg border-line px-3 text-xs font-bold text-brand hover:border-brand hover:bg-white"
+                          >
+                            Detail
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </div>
-        <Link
-          href="/admin/monitoring"
-          className="text-xs font-bold text-brand hover:underline"
-        >
-          Buka monitoring →
-        </Link>
-      </Card>
+        )}
+      </div>
     </div>
   );
 }

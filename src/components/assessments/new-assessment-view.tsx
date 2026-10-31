@@ -5,15 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   BookOpen,
-  ChevronDown,
-  ChevronUp,
   Plus,
   Save,
+  Send,
   Trash2,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input, Select, Textarea, Field } from "@/components/ui/input";
 import { cn, generateId } from "@/lib/utils";
 import type { ClassItem } from "@/types";
@@ -33,72 +30,77 @@ interface QuestionDraft {
   rubric: RubricDraft[];
 }
 
-const newRubric = (): RubricDraft => ({
+const newRubric = (name = "Pemahaman Konsep & Argumen", maxScore = 15): RubricDraft => ({
   id: generateId(),
-  name: "",
-  maxScore: 10,
+  name,
+  maxScore,
 });
 
-const newQuestion = (): QuestionDraft => ({
+const newQuestion = (index = 1): QuestionDraft => ({
   id: generateId(),
   prompt: "",
   referenceAnswer: "",
   maxScore: 25,
   keywords: "",
-  rubric: [newRubric()],
+  rubric: [newRubric("Pemahaman Konsep", 15), newRubric("Kelengkapan Argumen & Istilah", 10)],
 });
 
 export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
   const router = useRouter();
   const [classId, setClassId] = useState(classes[0]?.id ?? "");
   const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState(classes[0]?.subject ?? "");
+  const [subject, setSubject] = useState(classes[0]?.subject ?? "Biologi");
   const [duration, setDuration] = useState(60);
-  const [dueDate, setDueDate] = useState("");
-  const [raterCount, setRaterCount] = useState(1);
-  const [instructions, setInstructions] = useState("");
-  const [questions, setQuestions] = useState<QuestionDraft[]>([
-    newQuestion(),
-  ]);
-  const [expanded, setExpanded] = useState<string | null>(
-    questions[0]?.id ?? null
+  const [dueDate, setDueDate] = useState("2026-11-05T23:59");
+  const [raterCount, setRaterCount] = useState(2);
+  const [instructions, setInstructions] = useState(
+    "Jawablah seluruh pertanyaan dengan uraian ilmiah, jelas, dan menyertakan mekanisme biokimia secara runtut."
   );
+  const [questions, setQuestions] = useState<QuestionDraft[]>([
+    newQuestion(1),
+  ]);
+  const [activeQuestionIdx, setActiveQuestionIdx] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateQuestion = (id: string, patch: Partial<QuestionDraft>) => {
+  const currentQ = questions[activeQuestionIdx] ?? questions[0];
+
+  const updateQuestion = (index: number, patch: Partial<QuestionDraft>) => {
     setQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, ...patch } : q))
+      prev.map((q, idx) => (idx === index ? { ...q, ...patch } : q))
     );
   };
 
   const addQuestion = () => {
-    const q = newQuestion();
+    const q = newQuestion(questions.length + 1);
     setQuestions((prev) => [...prev, q]);
-    setExpanded(q.id);
+    setActiveQuestionIdx(questions.length);
   };
 
-  const removeQuestion = (id: string) => {
-    setQuestions((prev) => prev.filter((q) => q.id !== id));
+  const removeQuestion = (index: number) => {
+    if (questions.length <= 1) return;
+    setQuestions((prev) => prev.filter((_, idx) => idx !== index));
+    setActiveQuestionIdx((prev) => Math.max(0, prev - 1));
   };
 
-  const addRubric = (questionId: string) => {
+  const addRubric = (qIdx: number) => {
     setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId ? { ...q, rubric: [...q.rubric, newRubric()] } : q
+      prev.map((q, idx) =>
+        idx === qIdx
+          ? { ...q, rubric: [...q.rubric, newRubric("Kriteria Penilaian Tambahan", 10)] }
+          : q
       )
     );
   };
 
   const updateRubric = (
-    questionId: string,
+    qIdx: number,
     rubricId: string,
     patch: Partial<RubricDraft>
   ) => {
     setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId
+      prev.map((q, idx) =>
+        idx === qIdx
           ? {
               ...q,
               rubric: q.rubric.map((r) =>
@@ -110,20 +112,19 @@ export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
     );
   };
 
-  const removeRubric = (questionId: string, rubricId: string) => {
+  const removeRubric = (qIdx: number, rubricId: string) => {
     setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === questionId
+      prev.map((q, idx) =>
+        idx === qIdx
           ? { ...q, rubric: q.rubric.filter((r) => r.id !== rubricId) }
           : q
       )
     );
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (status: "draft" | "active") => {
     if (!title.trim() || !dueDate) {
-      setError("Mohon lengkapi judul dan tanggal tenggat asesmen.");
+      setError("Mohon lengkapi judul dan batas waktu asesmen.");
       return;
     }
     setError(null);
@@ -141,6 +142,7 @@ export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
           dueDate,
           raterCount,
           instructions,
+          status,
           questions,
         }),
       });
@@ -152,7 +154,6 @@ export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
         return;
       }
 
-      setSaved(true);
       router.push(`/assessments/${data.assessmentId}`);
       router.refresh();
     } catch (err: any) {
@@ -168,370 +169,342 @@ export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
 
   if (classes.length === 0) {
     return (
-      <Card className="p-12 text-center">
+      <div className="rounded-2xl border border-white/80 bg-white p-12 text-center shadow-xs">
         <BookOpen className="mx-auto mb-3 h-10 w-10 text-line" />
-        <p className="text-sm font-semibold text-ink">Belum ada kelas</p>
+        <h2 className="text-base font-bold text-ink">Belum Ada Kelas</h2>
         <p className="mt-1 text-xs text-muted">
           Buat kelas terlebih dahulu sebelum membuat asesmen.
         </p>
         <Link href="/classes" className="mt-4 inline-block">
           <Button>Buka Daftar Kelas</Button>
         </Link>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <form onSubmit={handleSave} className="animate-fade-up space-y-6">
-      {/* Header */}
-      <div className="glass-panel flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+    <div className="animate-fade-up space-y-6">
+      {/* Top Header matching 04 · Guru buat asesmen.png */}
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/80 bg-white/85 p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] backdrop-blur-md sm:flex-row sm:items-center">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 rounded-full border border-orange-pastel bg-butter-yellow px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-brand">
-            <Plus className="h-3.5 w-3.5" />
-            <span>Asesmen Baru</span>
-          </div>
-          <h1 className="text-xl font-extrabold tracking-tight text-brand sm:text-2xl">
-            Buat Asesmen Esai & Rubrik
+          <h1 className="font-heading text-2xl font-extrabold tracking-wide text-brand sm:text-3xl">
+            BUAT ASESMEN BARU
           </h1>
           <p className="text-xs text-muted sm:text-sm">
-            Susun soal esai, kunci jawaban, dan kriteria rubrik penilaian.
+            Susun soal esai beserta kunci jawaban dan kriteria rubrik penilaian ganda.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/assessments">
-            <Button type="button" variant="outline">
-              <X className="h-4 w-4" />
-              Batal
-            </Button>
-          </Link>
-          <Button type="submit" loading={saving}>
-            <Save className="h-4 w-4" />
-            Simpan Asesmen
+          <Button
+            type="button"
+            variant="outline"
+            disabled={saving}
+            onClick={() => handleSave("draft")}
+            className="rounded-xl border-line text-xs font-bold text-brand hover:bg-paper"
+          >
+            <Save className="h-3.5 w-3.5" />
+            <span>Simpan Draf</span>
+          </Button>
+
+          <Button
+            type="button"
+            disabled={saving}
+            onClick={() => handleSave("active")}
+            className="rounded-xl bg-brand text-xs font-bold text-white shadow-md hover:bg-brand-dark"
+          >
+            <Send className="h-3.5 w-3.5" />
+            <span>Terbitkan Asesmen →</span>
           </Button>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs font-bold text-rose-700">
-          <span>{error}</span>
-          <button
-            type="button"
-            onClick={() => setError(null)}
-            className="cursor-pointer text-xs underline"
-          >
-            Tutup
-          </button>
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-xs font-semibold text-rose-800"
+        >
+          ⚠️ {error}
         </div>
       )}
 
-      {saved && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-brand bg-bleu-ciel/35 p-3.5 text-xs font-bold text-brand">
-          <span>
-            ✅ Asesmen berhasil disimpan dan dibuka untuk siswa.
-          </span>
-          <button
-            type="button"
-            onClick={() => setSaved(false)}
-            className="cursor-pointer text-xs underline"
-          >
-            Tutup
-          </button>
-        </div>
-      )}
+      {/* Main 2-Column Grid */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+        {/* Left Column: Form Info & Question Editor (8 cols) */}
+        <div className="space-y-6 lg:col-span-8">
+          {/* Card: INFORMASI ASESMEN */}
+          <div className="rounded-2xl border border-white/90 bg-white p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] space-y-4">
+            <h2 className="font-heading text-base font-extrabold tracking-wider text-brand uppercase border-b border-line/50 pb-2">
+              INFORMASI ASESMEN
+            </h2>
 
-      {/* Metadata */}
-      <Card className="space-y-4">
-        <h2 className="text-sm font-bold text-brand">Informasi Asesmen</h2>
+            <Field label="Judul Asesmen *">
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Contoh: Ulangan Harian Fotosintesis & Reaksi Terang"
+                className="bg-paper/40"
+              />
+            </Field>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Kelas" required>
-            <Select
-              value={classId}
-              onChange={(e) => {
-                setClassId(e.target.value);
-                const cls = classes.find((c) => c.id === e.target.value);
-                if (cls) setSubject(cls.subject);
-              }}
-            >
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} — {c.grade}
-                </option>
-              ))}
-            </Select>
-          </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Mata Pelajaran *">
+                <Input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Biologi"
+                  className="bg-paper/40"
+                />
+              </Field>
 
-          <Field label="Mata Pelajaran" required>
-            <Input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Contoh: Biologi"
-            />
-          </Field>
-
-          <Field label="Judul Asesmen" required className="md:col-span-2">
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Contoh: Ulangan Harian Fotosintesis"
-            />
-          </Field>
-
-          <Field label="Durasi (menit)" required>
-            <Input
-              type="number"
-              min={5}
-              max={300}
-              value={duration}
-              onChange={(e) => setDuration(Number(e.target.value))}
-            />
-          </Field>
-
-          <Field label="Tenggat" required>
-            <Input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-          </Field>
-
-          <Field
-            label="Jumlah Penilai (Rater)"
-            hint="Jumlah guru yang menilai setiap jawaban"
-          >
-            <Select
-              value={raterCount}
-              onChange={(e) => setRaterCount(Number(e.target.value))}
-            >
-              <option value={1}>1 Rater (Guru tunggal)</option>
-              <option value={2}>2 Rater (Multi-rater)</option>
-              <option value={3}>3 Rater (Multi-rater)</option>
-            </Select>
-          </Field>
-
-          <Field label="Total Skor Maksimal">
-            <div className="flex h-10 items-center rounded-xl border border-line-2 bg-paper px-3">
-              <span className="nums text-sm font-extrabold text-brand">
-                {totalMax} poin
-              </span>
-            </div>
-          </Field>
-
-          <Field label="Petunjuk Pengerjaan" className="md:col-span-2">
-            <Textarea
-              rows={3}
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Jawab seluruh soal dengan kalimat Anda sendiri..."
-            />
-          </Field>
-        </div>
-      </Card>
-
-      {/* Questions */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-brand">
-            Soal Esai ({questions.length})
-          </h2>
-          <Button type="button" variant="secondary" size="sm" onClick={addQuestion}>
-            <Plus className="h-3.5 w-3.5" />
-            Tambah Soal
-          </Button>
-        </div>
-
-        {questions.map((q, idx) => {
-          const isOpen = expanded === q.id;
-          const rubricTotal = q.rubric.reduce(
-            (sum, r) => sum + (Number(r.maxScore) || 0),
-            0
-          );
-          const mismatch = rubricTotal !== Number(q.maxScore);
-
-          return (
-            <Card key={q.id} className="space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => setExpanded(isOpen ? null : q.id)}
-                  className="flex flex-1 cursor-pointer items-center gap-2 text-left"
+              <Field label="Kelas Sasaran *">
+                <Select
+                  value={classId}
+                  onChange={(e) => setClassId(e.target.value)}
+                  className="bg-paper/40"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand text-xs font-bold text-white">
-                    {idx + 1}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-bold text-brand">
-                      {q.prompt || "(Soal belum diisi)"}
-                    </span>
-                    <span className="block text-[11px] text-muted">
-                      {q.maxScore} poin • {q.rubric.length} kriteria
-                      {mismatch && (
-                        <span className="ml-1 font-semibold text-orange-600">
-                          ⚠ Rubrik {rubricTotal}p ≠ {q.maxScore}p
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                  {isOpen ? (
-                    <ChevronUp className="h-4 w-4 shrink-0 text-muted" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-muted" />
-                  )}
-                </button>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.grade})
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
 
-                {questions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeQuestion(q.id)}
-                    className="cursor-pointer rounded-lg p-1.5 text-muted transition-colors hover:bg-rose-50 hover:text-rose-600"
-                    title="Hapus soal"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Field label="Durasi (menit) *">
+                <Input
+                  type="number"
+                  min={15}
+                  max={180}
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value) || 60)}
+                  className="bg-paper/40"
+                />
+              </Field>
+
+              <Field label="Batas Waktu Pengumpulan *">
+                <Input
+                  type="datetime-local"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="bg-paper/40"
+                />
+              </Field>
+
+              <Field label="Target Penilai *">
+                <Select
+                  value={String(raterCount)}
+                  onChange={(e) => setRaterCount(Number(e.target.value) || 1)}
+                  className="bg-paper/40"
+                >
+                  <option value="1">1 Penilai (Tunggal)</option>
+                  <option value="2">2 Penilai (Multi-Rater)</option>
+                  <option value="3">3 Penilai (Konsensus Penuh)</option>
+                </Select>
+              </Field>
+            </div>
+
+            <Field label="Petunjuk Pengerjaan untuk Siswa">
+              <Textarea
+                rows={2}
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                placeholder="Tuliskan petunjuk pengerjaan esai di sini..."
+                className="bg-paper/40 text-xs"
+              />
+            </Field>
+          </div>
+
+          {/* Card: SOAL & KUNCI JAWABAN */}
+          {currentQ && (
+            <div className="rounded-2xl border border-white/90 bg-white p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] space-y-4">
+              <div className="flex items-center justify-between border-b border-line/50 pb-2">
+                <h2 className="font-heading text-base font-extrabold tracking-wider text-brand uppercase">
+                  SOAL {activeQuestionIdx + 1}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-muted">
+                    Bobot: {currentQ.maxScore} Poin
+                  </span>
+                  {questions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(activeQuestionIdx)}
+                      className="cursor-pointer text-xs font-semibold text-rose-600 hover:text-rose-800 flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Hapus
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {isOpen && (
-                <div className="space-y-4 border-t border-line/60 pt-4">
-                  <Field label="Pertanyaan Esai" required>
-                    <Textarea
-                      rows={3}
-                      value={q.prompt}
-                      onChange={(e) =>
-                        updateQuestion(q.id, { prompt: e.target.value })
-                      }
-                      placeholder="Tulis pertanyaan esai di sini..."
-                    />
-                  </Field>
+              <Field label="Pertanyaan Soal Esai *">
+                <Textarea
+                  rows={3}
+                  value={currentQ.prompt}
+                  onChange={(e) =>
+                    updateQuestion(activeQuestionIdx, { prompt: e.target.value })
+                  }
+                  placeholder="Tuliskan pertanyaan esai secara jelas..."
+                  className="bg-paper/40 text-xs"
+                />
+              </Field>
 
-                  <Field label="Kunci Jawaban / Referensi">
-                    <Textarea
-                      rows={3}
-                      value={q.referenceAnswer}
-                      onChange={(e) =>
-                        updateQuestion(q.id, {
-                          referenceAnswer: e.target.value,
-                        })
-                      }
-                      placeholder="Uraian jawaban yang diharapkan..."
-                    />
-                  </Field>
+              <Field label="Kunci Jawaban Acuan (Reference Answer untuk AI & Guru) *">
+                <Textarea
+                  rows={4}
+                  value={currentQ.referenceAnswer}
+                  onChange={(e) =>
+                    updateQuestion(activeQuestionIdx, {
+                      referenceAnswer: e.target.value,
+                    })
+                  }
+                  placeholder="Kunci jawaban acuan komprehensif yang memuat seluruh kata kunci dan konsep ilmiah..."
+                  className="bg-paper/40 text-xs"
+                />
+              </Field>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field label="Skor Maksimal Soal" required>
+              {/* Rubric Criteria List */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-brand">
+                    Kriteria Rubrik Penilaian
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => addRubric(activeQuestionIdx)}
+                    className="flex cursor-pointer items-center gap-1 text-xs font-bold text-brand hover:underline"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Tambah Kriteria
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {currentQ.rubric.map((r, rIdx) => (
+                    <div
+                      key={r.id}
+                      className="flex items-center gap-3 rounded-xl border border-line/60 bg-paper/40 p-3"
+                    >
+                      <span className="font-mono text-xs font-bold text-brand">
+                        K{rIdx + 1}
+                      </span>
                       <Input
-                        type="number"
-                        min={1}
-                        value={q.maxScore}
+                        value={r.name}
                         onChange={(e) =>
-                          updateQuestion(q.id, {
-                            maxScore: Number(e.target.value),
+                          updateRubric(activeQuestionIdx, r.id, {
+                            name: e.target.value,
                           })
                         }
+                        placeholder="Nama kriteria rubrik (misal: Ketepatan Konsep)"
+                        className="flex-1 bg-white text-xs"
                       />
-                    </Field>
-
-                    <Field
-                      label="Kata Kunci (pisahkan dengan koma)"
-                      hint="Digunakan AI untuk deteksi konsep"
-                    >
-                      <Input
-                        value={q.keywords}
-                        onChange={(e) =>
-                          updateQuestion(q.id, { keywords: e.target.value })
-                        }
-                        placeholder="Klorofil, fotolisis, glukosa"
-                      />
-                    </Field>
-                  </div>
-
-                  {/* Rubric */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-brand">
-                        Kriteria Rubrik ({q.rubric.length})
-                      </span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addRubric(q.id)}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Tambah
-                      </Button>
-                    </div>
-
-                    {q.rubric.map((r, rIdx) => (
-                      <div
-                        key={r.id}
-                        className="flex items-end gap-2 rounded-xl border border-line bg-white/60 p-2.5"
-                      >
-                        <Field
-                          label={`Kriteria ${rIdx + 1}`}
-                          className="flex-1"
-                        >
-                          <Input
-                            value={r.name}
-                            onChange={(e) =>
-                              updateRubric(q.id, r.id, {
-                                name: e.target.value,
-                              })
-                            }
-                            placeholder="Nama kriteria"
-                          />
-                        </Field>
-                        <Field label="Poin" className="w-24">
-                          <Input
-                            type="number"
-                            min={1}
-                            value={r.maxScore}
-                            onChange={(e) =>
-                              updateRubric(q.id, r.id, {
-                                maxScore: Number(e.target.value),
-                              })
-                            }
-                          />
-                        </Field>
-                        {q.rubric.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeRubric(q.id, r.id)}
-                            className="mb-1 cursor-pointer rounded-lg p-2 text-muted transition-colors hover:bg-rose-50 hover:text-rose-600"
-                            title="Hapus kriteria"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={50}
+                          value={r.maxScore}
+                          onChange={(e) =>
+                            updateRubric(activeQuestionIdx, r.id, {
+                              maxScore: Number(e.target.value) || 5,
+                            })
+                          }
+                          className="w-16 bg-white text-center text-xs font-mono font-bold"
+                        />
+                        <span className="text-xs text-muted">Poin</span>
                       </div>
-                    ))}
-
-                    {mismatch && (
-                      <p className="text-[11px] font-semibold text-orange-600">
-                        ⚠ Total poin rubrik ({rubricTotal}) berbeda dari skor
-                        maksimal soal ({q.maxScore}).
-                      </p>
-                    )}
-                  </div>
+                      {currentQ.rubric.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeRubric(activeQuestionIdx, r.id)}
+                          className="cursor-pointer text-muted hover:text-rose-600"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              )}
-            </Card>
-          );
-        })}
-      </div>
+              </div>
+            </div>
+          )}
+        </div>
 
-      <div className="flex justify-end gap-2">
-        <Link href="/assessments">
-          <Button type="button" variant="outline">
-            Batal
-          </Button>
-        </Link>
-        <Button type="submit">
-          <Save className="h-4 w-4" />
-          Simpan Asesmen ({totalMax} poin)
-        </Button>
+        {/* Right Column: Structure & Questions Sidebar (4 cols) */}
+        <aside className="space-y-4 lg:col-span-4">
+          <div className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)] space-y-4">
+            <h2 className="font-heading text-base font-extrabold tracking-wider text-brand uppercase">
+              STRUKTUR ASESMEN
+            </h2>
+
+            {/* Questions Tabs */}
+            <div className="space-y-2">
+              {questions.map((q, idx) => {
+                const isSelected = idx === activeQuestionIdx;
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => setActiveQuestionIdx(idx)}
+                    className={cn(
+                      "flex w-full cursor-pointer items-center justify-between rounded-xl p-3 text-left transition-all",
+                      isSelected
+                        ? "bg-brand text-white shadow-md"
+                        : "border border-line bg-paper text-ink hover:border-brand-line hover:bg-white"
+                    )}
+                  >
+                    <span className="text-xs font-bold">
+                      Soal {idx + 1}
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-md px-2 py-0.5 font-mono text-[11px] font-bold",
+                        isSelected
+                          ? "bg-white/20 text-white"
+                          : "bg-white border border-line text-brand"
+                      )}
+                    >
+                      {q.maxScore} Poin
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addQuestion}
+              className="w-full gap-2 rounded-xl border-dashed border-brand-line text-xs font-bold text-brand hover:bg-brand-tint/40"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Tambah Soal Baru</span>
+            </Button>
+
+            {/* Total Score Summary */}
+            <div className="border-t border-line/60 pt-3 flex items-center justify-between text-xs">
+              <span className="font-semibold text-muted">Total Skor Maksimal:</span>
+              <span className="font-mono text-base font-extrabold text-brand">
+                {totalMax} Poin
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Publish Card */}
+          <div className="rounded-2xl border border-bleu-ciel/40 bg-[#F0F5FF] p-5 space-y-3">
+            <h3 className="font-heading text-sm font-extrabold text-brand uppercase">
+              Panduan Pembuatan
+            </h3>
+            <p className="text-xs leading-relaxed text-muted">
+              Sistem ESAINA menggunakan kunci acuan dan kriteria rubrik ini untuk memandu model IndoBERT dan tim evaluator multi-rater memberikan skor yang konsisten dan akurat.
+            </p>
+          </div>
+        </aside>
       </div>
-    </form>
+    </div>
   );
 }
