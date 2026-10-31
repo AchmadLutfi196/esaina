@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { LogoutButton } from "../logout-button";
 import { StudentClasses } from "./student-classes";
+import { AssessmentList } from "./assessment-list";
 
 export const metadata = { title: "Kelas saya — ESAINA" };
 
@@ -21,6 +22,10 @@ export default async function StudentHome() {
         <LogoutButton />
       </header>
       <StudentClasses />
+      <section className="flex flex-col gap-3">
+        <h2 className="text-2xl font-semibold text-primary">Asesmen terbuka</h2>
+        <AssessmentList />
+      </section>
     </div>
   );
 }
