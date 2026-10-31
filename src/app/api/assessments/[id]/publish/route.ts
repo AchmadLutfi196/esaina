@@ -25,8 +25,12 @@ export const POST = route<[Ctx]>(async (req, ctx) => {
   if (!assessment || assessment.class.teacherId !== teacher.id) throw notFound("Asesmen");
   const existingKey = await prisma.idempotencyKey.findUnique({ where: { key: parsed.data.idempotencyKey } });
   if (existingKey) return ok({ published: 0, replayed: true });
-  const revisions = await prisma.gradeRevision.findMany({ where: { submissionId: { in: parsed.data.submissionIds }, status: "FINAL", submission: { assessmentId: id } }, select: { id: true, submissionId: true } });
-  if (revisions.length !== parsed.data.submissionIds.length) throw conflict("Hanya nilai final asesmen ini yang dapat diterbitkan.");
+  // Ambil revisi FINAL terakhir tiap submission (revisi lama yang sudah terbit tetap ada).
+  const finalRevisions = await prisma.gradeRevision.findMany({ where: { submissionId: { in: parsed.data.submissionIds }, status: "FINAL", submission: { assessmentId: id } }, orderBy: { version: "desc" }, select: { id: true, submissionId: true } });
+  const latest = new Map<string, string>();
+  for (const r of finalRevisions) if (!latest.has(r.submissionId)) latest.set(r.submissionId, r.id);
+  const revisions = parsed.data.submissionIds.map((sid) => ({ id: latest.get(sid)!, submissionId: sid }));
+  if (revisions.some((r) => !r.id)) throw conflict("Hanya nilai final asesmen ini yang dapat diterbitkan.");
   const result = await prisma.$transaction(async (tx) => {
     await tx.idempotencyKey.create({ data: { key: parsed.data.idempotencyKey, userId: teacher.id, scope: "publish" } });
     const existing = await tx.publication.findMany({ where: { revisionId: { in: revisions.map((r) => r.id) } }, select: { revisionId: true } });

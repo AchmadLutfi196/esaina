@@ -26,7 +26,7 @@ export const GET = route(async (_req, ctx: Ctx) => {
         },
       },
       answers: { select: { questionId: true, content: true } },
-      gradeRevisions: { orderBy: { version: "desc" }, take: 1, select: { id: true, version: true, status: true, totalScore: true, items: { select: { questionId: true, criterionId: true, score: true, feedback: true } } } },
+      gradeRevisions: { orderBy: { version: "desc" }, take: 1, select: { id: true, version: true, status: true, totalScore: true, publications: { select: { id: true } }, items: { select: { questionId: true, criterionId: true, score: true, feedback: true } } } },
     },
   });
   if (!detail) throw notFound("Lembar kerja");
