@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { LogoutButton } from "../logout-button";
 import { ClassList } from "./class-list";
+import { AssessmentBuilder } from "./assessment-builder";
 
 export const metadata = { title: "Ruang kerja guru — ESAINA" };
 
@@ -21,6 +22,7 @@ export default async function TeacherHome() {
         <LogoutButton />
       </header>
       <ClassList />
+      <AssessmentBuilder />
     </div>
   );
 }

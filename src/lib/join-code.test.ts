@@ -11,7 +11,7 @@ describe("join code", () => {
   it("retry sampai kode unik", async () => {
     const seen = new Set(["first"]);
     let calls = 0;
-    const code = await uniqueJoinCode(async (candidate) => {
+    const code = await uniqueJoinCode(async () => {
       calls++;
       return calls === 1;
     });
