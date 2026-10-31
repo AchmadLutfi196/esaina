@@ -1,0 +1,39 @@
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { requireTeacher, route } from "@/lib/auth/guard";
+import { conflict, notFound, validationError } from "@/lib/api-error";
+import { ok, readJson } from "@/lib/http";
+
+ type Ctx = { params: Promise<{ id: string }> };
+const publishSchema = z.object({ submissionIds: z.array(z.string()).min(1), idempotencyKey: z.string().min(8).max(100) });
+
+export const GET = route<[Ctx]>(async (_req, ctx) => {
+  const teacher = await requireTeacher();
+  const { id } = await ctx.params;
+  const assessment = await prisma.assessment.findUnique({ where: { id }, select: { id: true, title: true, class: { select: { teacherId: true } } } });
+  if (!assessment || assessment.class.teacherId !== teacher.id) throw notFound("Asesmen");
+  const rows = await prisma.submission.findMany({ where: { assessmentId: id, status: "SUBMITTED" }, orderBy: { submittedAt: "asc" }, select: { id: true, student: { select: { anonCode: true } }, submittedAt: true, gradeRevisions: { where: { status: "FINAL" }, orderBy: { version: "desc" }, take: 1, select: { id: true, totalScore: true, version: true, publications: { select: { id: true, publishedAt: true } } } } } });
+  return ok({ assessment: { id: assessment.id, title: assessment.title }, submissions: rows.map((s) => { const r = s.gradeRevisions[0]; return { id: s.id, anonCode: s.student.anonCode, submittedAt: s.submittedAt, revisionId: r?.id ?? null, totalScore: r?.totalScore ?? null, published: Boolean(r?.publications.length), publishedAt: r?.publications[0]?.publishedAt ?? null }; }) });
+});
+
+export const POST = route<[Ctx]>(async (req, ctx) => {
+  const teacher = await requireTeacher();
+  const { id } = await ctx.params;
+  const parsed = publishSchema.safeParse(await readJson(req));
+  if (!parsed.success) throw validationError(parsed.error.flatten());
+  const assessment = await prisma.assessment.findUnique({ where: { id }, select: { id: true, class: { select: { teacherId: true } } } });
+  if (!assessment || assessment.class.teacherId !== teacher.id) throw notFound("Asesmen");
+  const existingKey = await prisma.idempotencyKey.findUnique({ where: { key: parsed.data.idempotencyKey } });
+  if (existingKey) return ok({ published: 0, replayed: true });
+  const revisions = await prisma.gradeRevision.findMany({ where: { submissionId: { in: parsed.data.submissionIds }, status: "FINAL", submission: { assessmentId: id } }, select: { id: true, submissionId: true } });
+  if (revisions.length !== parsed.data.submissionIds.length) throw conflict("Hanya nilai final asesmen ini yang dapat diterbitkan.");
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.idempotencyKey.create({ data: { key: parsed.data.idempotencyKey, userId: teacher.id, scope: "publish" } });
+    const existing = await tx.publication.findMany({ where: { revisionId: { in: revisions.map((r) => r.id) } }, select: { revisionId: true } });
+    const fresh = revisions.filter((r) => !existing.some((e) => e.revisionId === r.id));
+    if (fresh.length) await tx.publication.createMany({ data: fresh.map((r) => ({ assessmentId: id, revisionId: r.id, publishedById: teacher.id })) });
+    await tx.auditEvent.create({ data: { actorId: teacher.id, action: "PUBLISH", entityType: "Assessment", entityId: id } });
+    return fresh.length;
+  });
+  return ok({ published: result, replayed: false });
+});
