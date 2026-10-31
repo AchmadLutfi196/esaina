@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth/config";
 import { LogoutButton } from "../logout-button";
 import { StudentClasses } from "./student-classes";
 import { AssessmentList } from "./assessment-list";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const metadata = { title: "Kelas saya — ESAINA" };
 
@@ -19,7 +21,7 @@ export default async function StudentHome() {
           <h1 className="text-3xl font-semibold text-primary">Kelas saya</h1>
           <p className="text-sm text-muted-foreground">Halo, {session.user.name}.</p>
         </div>
-        <LogoutButton />
+        <div className="flex items-center gap-2"><Button asChild variant="outline" size="sm"><Link href="/siswa/results">Hasil</Link></Button><LogoutButton /></div>
       </header>
       <StudentClasses />
       <section className="flex flex-col gap-3">
