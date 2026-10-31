@@ -1,26 +1,316 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ═══════════════════════════════════════════════════════════════
+   ESAINA Design System — Bleu Océan Glassmorphism
+   Generated & tuned via UI/UX Pro Max Design Intelligence
+   ═══════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Core palette (PRD §6) */
+  --color-bleu-ocean: #0a1680;
+  --color-bleu-ciel: #93b2f8;
+  --color-butter-yellow: #fbedb0;
+  --color-orange-pastel: #f1b94c;
+  --color-blanc-casse: #fcfdff;
+
+  /* Semantic mapping */
+  --color-paper: #f2f6fd;
+  --color-surface: #fcfdff;
+  --color-forest: #0a1680;
+  --color-forest-dark: #060e59;
+  --color-mist: #93b2f8;
+  --color-ink: #0a1680;
+  --color-ink-2: #2a3968;
+
+  --color-brand: #0a1680;
+  --color-brand-dark: #060e59;
+  --color-brand-tint: #ebf1fe;
+  --color-brand-line: #93b2f8;
+
+  --color-accent: #f1b94c;
+  --color-accent-dark: #d49929;
+  --color-accent-tint: #fbedb0;
+  --color-accent-ink: #0a1680;
+
+  --color-muted: #52697c;
+  --color-line: #c9d9e8;
+  --color-line-2: #b0c7de;
+  --color-sage-dark: #0a1680;
+
+  /* Status */
+  --color-ok-bg: #e8f8f0;
+  --color-ok-ink: #0e623b;
+  --color-warn-bg: #fff7eb;
+  --color-warn-ink: #8f5800;
+
+  /* Typography */
+  --font-heading: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo,
+    monospace;
+
+  /* Radii */
+  --radius-glass: 20px;
+  --radius-card: 18px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    background-color: var(--color-paper);
+    min-height: 100vh;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-heading,
+  .font-display {
+    font-family: var(--font-heading);
+    overflow-wrap: anywhere;
+    letter-spacing: -0.02em;
+  }
+
+  :where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Utility layers ─────────────────────────────────────────── */
+
+.nums {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+/* Solid high-contrast surface for essays & score inputs (WCAG AAA >= 4.5:1) */
+.work-surface {
+  background-color: rgba(252, 253, 255, 0.96);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+}
+
+/* ── UI/UX Pro Max Glassmorphism Tokens ──────────────────────── */
+
+/* Glassmorphic panels with specular highlight refraction */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 10px 36px 0 rgba(10, 22, 128, 0.07),
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 4px 30px rgba(10, 22, 128, 0.04),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 8px 30px 0 rgba(10, 22, 128, 0.06),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(147, 178, 248, 0.7);
+  box-shadow:
+    0 16px 42px 0 rgba(10, 22, 128, 0.1),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 1);
+  transform: translateY(-2px);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 2px 10px rgba(10, 22, 128, 0.04),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.9);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 4px 16px rgba(10, 22, 128, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(147, 178, 248, 0.6);
+  box-shadow:
+    0 8px 24px rgba(10, 22, 128, 0.09),
+    inset 0 1px 1px rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+
+/* Ambient diffusion orbs with subtle floating animation */
+.ambient-orb {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 9999px;
+  filter: blur(64px);
+  z-index: 0;
+  will-change: transform, opacity;
+}
+
+/* Evidence highlight (Butter Yellow) — PRD §6 */
+.evidence-highlight {
+  background: linear-gradient(
+    180deg,
+    transparent 8%,
+    rgba(251, 237, 176, 0.75) 8%,
+    rgba(251, 237, 176, 0.75) 92%,
+    transparent 92%
+  );
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(176, 199, 222, 0.6);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-line);
+}
+
+/* Animations */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Ambient floating animations for glassmorphic refraction depth */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(25px, -18px) scale(1.04);
+  }
+  66% {
+    transform: translate(-18px, 15px) scale(0.96);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-25px, 20px) scale(0.96);
+  }
+  66% {
+    transform: translate(20px, -20px) scale(1.05);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 22s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 26s ease-in-out infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 12s ease-in-out infinite;
+}
+
+/* Accessibility: respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-slow,
+  .animate-float-reverse,
+  .animate-pulse-subtle,
+  .animate-fade-up,
+  .animate-pulse-dot {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
