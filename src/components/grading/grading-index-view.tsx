@@ -19,19 +19,25 @@ import {
 } from "@/types";
 
 export function GradingIndexView({
-  assessments,
+  assessments = [],
 }: {
   assessments: Assessment[];
 }) {
-  const pending = assessments
+  const pending = (assessments || [])
     .map((a) => {
-      const submitted = a.submissions.filter(
-        (s) => s.statusWork === "submitted"
+      const submissions = Array.isArray(a?.submissions) ? a.submissions : [];
+      const submitted = submissions.filter(
+        (s) => s?.statusWork === "submitted"
       );
       const ungraded = submitted.filter(
-        (s) => s.statusGrading !== "final"
+        (s) => s?.statusGrading !== "final"
       );
-      return { assessment: a, submitted: submitted.length, ungraded: ungraded.length };
+      return {
+        assessment: a,
+        submitted: submitted.length,
+        ungraded: ungraded.length,
+        totalStudents: submissions.length,
+      };
     })
     .sort((a, b) => b.ungraded - a.ungraded);
 
@@ -81,14 +87,14 @@ export function GradingIndexView({
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {pending.map(({ assessment: a, submitted, ungraded }) => (
+            {pending.map(({ assessment: a, submitted, ungraded, totalStudents }) => (
               <Card key={a.id} className="flex flex-col justify-between gap-4">
                 <div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="rounded-md border border-brand-line/70 bg-brand-tint px-2 py-0.5 font-mono text-[10px] font-bold text-brand">
                       {a.code}
                     </span>
-                    <Badge status={ASSESSMENT_STATUS_LABEL[a.status]} />
+                    <Badge status={a?.status ? ASSESSMENT_STATUS_LABEL[a.status] : "Aktif"} />
                   </div>
                   <h3 className="mt-2 text-sm font-bold text-brand">
                     {a.title}
@@ -100,7 +106,7 @@ export function GradingIndexView({
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
                     <div className="rounded-lg bg-paper p-2">
                       <span className="block font-bold text-brand">
-                        {a.submissions.length}
+                        {totalStudents}
                       </span>
                       <span className="text-muted">Siswa</span>
                     </div>

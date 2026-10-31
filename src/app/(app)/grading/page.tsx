@@ -15,7 +15,9 @@ export default async function GradingIndexPage() {
 
   return (
     <GradingIndexView
-      assessments={assessments.filter((a) => a.submissions.length > 0)}
+      assessments={(assessments || []).filter(
+        (a) => (a?.submissions?.length || 0) > 0
+      )}
     />
   );
 }

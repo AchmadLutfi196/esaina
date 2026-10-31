@@ -271,24 +271,26 @@ function toSubmission(
 }
 
 function toAssessment(a: RawAssessment): Assessment {
-  const questions = a.questions.map(toQuestion);
+  const questions = Array.isArray(a.questions) ? a.questions.map(toQuestion) : [];
   return {
     id: a.id,
     classId: a.classId,
-    className: a.class.name,
+    className: a.class?.name ?? "Kelas",
     title: a.title,
     code: a.code,
     subject: a.subject,
     status: a.status as Assessment["status"],
     publicationStatus: a.publicationStatus as Assessment["publicationStatus"],
     publishedAt: a.publishedAt?.toISOString(),
-    dueDate: a.dueDate.toISOString(),
+    dueDate: a.dueDate?.toISOString ? a.dueDate.toISOString() : String(a.dueDate),
     durationMinutes: a.durationMinutes,
-    raterCount: a.raterCount,
-    targetRaters: a.targetRaters,
+    raterCount: a.raterCount ?? 1,
+    targetRaters: a.targetRaters ?? 1,
     instructions: a.instructions,
     questions,
-    submissions: a.submissions.map((s) => toSubmission(s, a.questions)),
+    submissions: Array.isArray(a.submissions)
+      ? a.submissions.map((s) => toSubmission(s, a.questions || []))
+      : [],
   };
 }
 
