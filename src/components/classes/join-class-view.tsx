@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, KeyRound, ArrowRight } from "lucide-react";
+import { GraduationCap, KeyRound, ArrowRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Field } from "@/components/ui/input";
@@ -88,9 +88,10 @@ export function JoinClassView() {
           </Button>
         </form>
 
-        <div className="rounded-xl border border-brand-line/40 bg-brand-tint/60 p-3">
-          <p className="text-[11px] font-semibold text-brand">
-            💡 Kode kelas dapat berbeda dari kode asesmen. Jika Anda tidak
+        <div className="flex items-start gap-2 rounded-xl border border-brand-line/40 bg-brand-tint/60 p-3 text-[11px] font-semibold text-brand">
+          <Info className="h-4 w-4 shrink-0 text-brand mt-0.5" />
+          <p>
+            Kode kelas dapat berbeda dari kode asesmen. Jika Anda tidak
             yakin, tanyakan kepada guru Anda.
           </p>
         </div>

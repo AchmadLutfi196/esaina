@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, Bell, Sparkles } from "lucide-react";
+import { Search, Bell, Sparkles, User } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
 import type { Role } from "@/types";
 
@@ -36,7 +36,7 @@ export function Header({
               {userName} {role === "teacher" && "(Fisika)"}
             </h1>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B8E2D8] bg-[#E6F4F1] px-2.5 py-0.5 text-[11px] font-bold text-[#0D523C]">
-              <span>👤</span>
+              <User className="h-3 w-3 shrink-0" />
               <span>{roleLabel} {identifier ? `(${identifier})` : ""}</span>
             </span>
           </div>

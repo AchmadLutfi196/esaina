@@ -337,7 +337,7 @@ export function StudentExamView({
                           isCurrent ? "bg-white/20 text-white" : "text-brand"
                         )}
                       >
-                        ✓
+                        <Check className="h-2.5 w-2.5" />
                       </span>
                     )}
                   </button>

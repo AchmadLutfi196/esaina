@@ -78,7 +78,7 @@ export function StudentResultView({
               <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-800">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                 <span>
-                  ✓ Diterbitkan Resmi oleh Guru (
+                  Diterbitkan Resmi oleh Guru (
                   {assessment.publishedAt
                     ? formatDateTime(assessment.publishedAt)
                     : "Terbit"}

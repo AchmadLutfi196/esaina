@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useActionState, useState } from "react";
-import { ArrowRight, Check, GraduationCap, Lock, Mail, Shield, User, Sparkles } from "lucide-react";
+import { ArrowRight, Check, GraduationCap, Lock, Mail, Shield, User, Sparkles, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Field } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -172,9 +172,10 @@ export function LoginForm() {
             {state?.error && (
               <div
                 role="alert"
-                className="rounded-xl border border-rose-300 bg-rose-50 p-2.5 text-xs font-semibold text-rose-800"
+                className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 p-2.5 text-xs font-semibold text-rose-800"
               >
-                ⚠️ {state.error}
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                <span>{state.error}</span>
               </div>
             )}
 

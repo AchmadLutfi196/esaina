@@ -207,8 +207,9 @@ export function AssessmentDetailView({
       </div>
 
       {publishMessage && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800">
-          ✅ {publishMessage}
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+          <span>{publishMessage}</span>
         </div>
       )}
 
@@ -289,8 +290,9 @@ export function AssessmentDetailView({
       {/* Multi-Rater Consensus Bar matching 06 · Guru rekap & konsensus.png */}
       <div className="flex flex-col justify-between gap-3 rounded-2xl border border-bleu-ciel/50 bg-[#F0F5FF] p-4 text-xs sm:flex-row sm:items-center">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-bold text-brand">
-            📊 Progres Multi-Rater:
+          <span className="flex items-center gap-1.5 font-bold text-brand">
+            <BarChart3 className="h-4 w-4 shrink-0" />
+            <span>Progres Multi-Rater:</span>
           </span>
           <span className="rounded-md border border-bleu-ciel/60 bg-white px-2.5 py-1 font-semibold text-brand">
             Penilai 1: Dra. Sri Wahyuni (100% Selesai)

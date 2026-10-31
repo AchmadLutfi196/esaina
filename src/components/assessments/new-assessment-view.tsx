@@ -9,6 +9,7 @@ import {
   Save,
   Send,
   Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea, Field } from "@/components/ui/input";
@@ -222,9 +223,10 @@ export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
       {error && (
         <div
           role="alert"
-          className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-xs font-semibold text-rose-800"
+          className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 p-4 text-xs font-semibold text-rose-800"
         >
-          ⚠️ {error}
+          <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
+          <span>{error}</span>
         </div>
       )}
 

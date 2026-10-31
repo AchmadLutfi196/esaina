@@ -22,6 +22,9 @@ import {
   Sparkles,
   UserCheck,
   Wand2,
+  AlertTriangle,
+  CheckCircle2,
+  Info,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -583,8 +586,9 @@ export function GradingWorkspace({
                               <p className="italic font-medium">
                                 &ldquo;{quote.text}&rdquo;
                               </p>
-                              <p className="mt-1 text-[11px] opacity-85">
-                                💡 {quote.note}
+                              <p className="mt-1 flex items-center gap-1.5 text-[11px] opacity-85">
+                                <Info className="h-3 w-3 shrink-0" />
+                                <span>{quote.note}</span>
                               </p>
                             </div>
                           )
@@ -620,7 +624,10 @@ export function GradingWorkspace({
                       aria-live="polite"
                       className="flex items-center justify-between rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-xs font-bold text-emerald-800"
                     >
-                      <span>✨ Rekomendasi berhasil diterapkan ke rubrik!</span>
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-emerald-700" />
+                        <span>Rekomendasi berhasil diterapkan ke rubrik!</span>
+                      </span>
                       {previousFeedback !== null && (
                         <button
                           type="button"
@@ -655,9 +662,10 @@ export function GradingWorkspace({
             {aiError && (
               <div
                 role="alert"
-                className="mt-2 rounded-xl border border-rose-300 bg-rose-50 p-2.5 text-xs font-semibold text-rose-700"
+                className="mt-2 flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 p-2.5 text-xs font-semibold text-rose-700"
               >
-                ⚠️ {aiError}
+                <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
+                <span>{aiError}</span>
               </div>
             )}
           </div>
@@ -734,9 +742,12 @@ export function GradingWorkspace({
 
                     {/* Active Selected Descriptor */}
                     {activeLevel && (
-                      <div className="mt-1.5 rounded-lg border border-brand-line/40 bg-brand-tint/40 p-2 text-[11px] leading-relaxed text-brand">
-                        💡 <strong>{activeLevel.label}:</strong>{" "}
-                        {activeLevel.description}
+                      <div className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-brand-line/40 bg-brand-tint/40 p-2 text-[11px] leading-relaxed text-brand">
+                        <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        <div>
+                          <strong>{activeLevel.label}:</strong>{" "}
+                          {activeLevel.description}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -832,17 +843,19 @@ export function GradingWorkspace({
             <div
               role="status"
               aria-live="polite"
-              className="rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-xs font-bold text-emerald-800 shadow-xs"
+              className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-xs font-bold text-emerald-800 shadow-xs"
             >
-              ✅ {saveSuccess}
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              <span>{saveSuccess}</span>
             </div>
           )}
           {saveError && (
             <div
               role="alert"
-              className="rounded-xl border border-rose-300 bg-rose-50 p-2.5 text-xs font-bold text-rose-800 shadow-xs"
+              className="flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 p-2.5 text-xs font-bold text-rose-800 shadow-xs"
             >
-              ⚠️ {saveError}
+              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
+              <span>{saveError}</span>
             </div>
           )}
         </div>

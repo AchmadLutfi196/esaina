@@ -14,6 +14,7 @@ import {
   Plus,
   Users,
   X,
+  Info,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -279,9 +280,9 @@ export function ClassesView({
               </Select>
             </Field>
           </div>
-          <p className="text-[11px] text-muted">
-            💡 API route untuk membuat kelas akan ditambahkan di iterasi
-            berikutnya.
+          <p className="flex items-center gap-1.5 text-[11px] text-muted">
+            <Info className="h-3.5 w-3.5 shrink-0 text-brand" />
+            <span>API route untuk membuat kelas akan ditambahkan di iterasi berikutnya.</span>
           </p>
         </div>
       </Dialog>
