@@ -43,6 +43,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id;
         token.role = (user as { role: Role }).role;
         token.identifier = (user as { identifier?: string | null }).identifier ?? null;
+      } else if (token.email) {
+        // Keep session in sync with database (e.g. after database re-seeds or role updates)
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email },
+            select: { id: true, role: true, identifier: true, isActive: true },
+          });
+          if (dbUser && dbUser.isActive) {
+            token.id = dbUser.id;
+            token.role = dbUser.role as Role;
+            token.identifier = dbUser.identifier;
+          }
+        } catch (err) {
+          console.error("JWT user sync error:", err);
+        }
       }
       return token;
     },

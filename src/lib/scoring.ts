@@ -20,9 +20,10 @@ export function calculateSubmissionTotalScore(
 }
 
 export function hasSubmissionAnyScore(
-  submission: Pick<StudentSubmission, "answers"> | null | undefined
+  submission: Pick<StudentSubmission, "answers"> & Partial<Pick<StudentSubmission, "statusGrading">> | null | undefined
 ): boolean {
   if (!submission?.answers) return false;
+  if (submission.statusGrading === "ungraded") return false;
   return Object.values(submission.answers).some(
     (ans) => ans.scores && Object.keys(ans.scores).length > 0
   );

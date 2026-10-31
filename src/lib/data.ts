@@ -215,8 +215,8 @@ function toSubmission(
       for (const cs of match.criterionScores) {
         scores[cs.criterionId] = cs.score;
       }
-    } else {
-      const holistic = match.ratings[0]?.score ?? 0;
+    } else if (match.ratings && match.ratings.length > 0) {
+      const holistic = match.ratings[0].score;
       if (q.rubric.length > 0) {
         const rubricTotal = q.rubric.reduce((sum, r) => sum + r.maxScore, 0);
         let allocated = 0;
