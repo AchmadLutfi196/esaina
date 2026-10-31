@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { QueryProvider } from "./query-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const jakartaSans = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700", "800"],
@@ -20,7 +22,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="id"
       className={`${jakartaSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <QueryProvider>
+          {children}
+          <Toaster />
+        </QueryProvider>
+      </body>
     </html>
   );
 }

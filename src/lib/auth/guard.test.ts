@@ -41,6 +41,11 @@ describe("requireTeacher / requireStudent", () => {
     getServerSession.mockResolvedValue({ user: TEACHER });
     await expect(requireTeacher()).resolves.toEqual(TEACHER);
   });
+
+  it("menolak guru pada requireStudent dengan 403", async () => {
+    getServerSession.mockResolvedValue({ user: TEACHER });
+    await expect(requireStudent()).rejects.toMatchObject({ status: 403 });
+  });
 });
 
 describe("requireClassOwner", () => {
