@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SubmitDialog } from "./submit-dialog";
 
 type Work = {
@@ -49,9 +50,14 @@ export function StudentWork({ assessmentId }: { assessmentId: string }) {
   const { assessment } = query.data;
 
   return <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10">
-    <header className="lg lg-regular lg-surface flex flex-col gap-2 px-6 py-5"><div className="flex items-center justify-between gap-3"><h1 className="text-3xl font-semibold text-primary">{assessment.title}</h1><Badge variant="secondary">{saveState === "saving" ? "Menyimpan…" : saveState === "saved" ? "Tersimpan" : saveState === "failed" ? "Gagal simpan" : saveState === "conflict" ? "Konflik versi" : "Draf"}</Badge></div><p className="text-sm text-muted-foreground">{assessment.instruction}</p></header>
+    <Card>
+      <CardHeader className="flex-col gap-2">
+        <div className="flex items-center justify-between gap-3"><h1 className="text-3xl font-semibold text-primary">{assessment.title}</h1><Badge variant={saveState === "failed" || saveState === "conflict" ? "warning" : "secondary"}>{saveState === "saving" ? "Menyimpan…" : saveState === "saved" ? "Tersimpan" : saveState === "failed" ? "Gagal simpan" : saveState === "conflict" ? "Konflik versi" : "Draf"}</Badge></div>
+        <p className="text-sm text-muted-foreground">{assessment.instruction}</p>
+      </CardHeader>
+    </Card>
     {saveState === "conflict" ? <Alert variant="destructive"><AlertDescription>Jawaban berubah di tab lain. Muat ulang halaman agar aman.</AlertDescription></Alert> : null}
-    {assessment.questions.map((q) => <section className="lg lg-regular lg-surface flex flex-col gap-3 px-6 py-5" key={q.id}><h2 className="font-medium text-primary">{q.order}. {q.text}</h2><Label htmlFor={`answer-${q.id}`}>Jawaban Anda</Label><Textarea id={`answer-${q.id}`} value={answers[q.id] ?? ""} onChange={(e) => change(q.id, e.target.value)} placeholder="Tulis jawaban…" rows={7} /><p className="text-xs text-muted-foreground">Maksimum {q.maxScore} poin · tersimpan otomatis setelah berhenti mengetik.</p></section>)}
+    {assessment.questions.map((q) => <Card className="gap-3" key={q.id}><CardHeader className="text-base font-medium text-primary">{q.order}. {q.text}</CardHeader><CardContent className="flex flex-col gap-3"><Label htmlFor={`answer-${q.id}`}>Jawaban Anda</Label><Textarea id={`answer-${q.id}`} value={answers[q.id] ?? ""} onChange={(e) => change(q.id, e.target.value)} placeholder="Tulis jawaban…" rows={7} /><p className="text-xs text-muted-foreground">Maksimum {q.maxScore} poin · tersimpan otomatis setelah berhenti mengetik.</p></CardContent></Card>)}
     <div className="flex items-center justify-between gap-4">
       <p className="text-sm text-muted-foreground">{saveState === "saving" ? "Menyimpan sebelum mengumpulkan…" : "Pastikan semua jawaban sudah selesai."}</p>
       <SubmitDialog assessmentId={assessmentId} version={version} unanswered={assessment.questions.filter((q) => !(answers[q.id] ?? "").trim()).length} />

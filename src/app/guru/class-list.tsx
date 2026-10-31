@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 type Kelas = {
   id: string;
@@ -62,24 +63,26 @@ export function ClassList() {
       ) : null}
 
       {classesQuery.data?.classes.length === 0 ? (
-        <div className="lg lg-regular lg-surface px-6 py-8 text-center">
+        <Card className="items-center px-6 py-8 text-center">
           <p className="text-sm text-muted-foreground">
             Belum ada kelas. Buat kelas pertama untuk mulai menyusun asesmen.
           </p>
-        </div>
+        </Card>
       ) : null}
 
       {classesQuery.data && classesQuery.data.classes.length > 0 ? (
         <ul className="grid gap-3 sm:grid-cols-2">
           {classesQuery.data.classes.map((k) => (
-            <li key={k.id} className="lg lg-regular lg-surface flex flex-col gap-3 px-5 py-4">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-lg font-medium text-primary">{k.name}</h3>
-                <Badge variant="secondary">Kode {k.joinCode}</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {k.memberCount} anggota · {k.assessmentCount} asesmen
-              </p>
+            <li key={k.id}>
+              <Card className="gap-3 px-5">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-lg font-medium text-primary">{k.name}</h3>
+                  <Badge variant="secondary">Kode {k.joinCode}</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {k.memberCount} anggota · {k.assessmentCount} asesmen
+                </p>
+              </Card>
             </li>
           ))}
         </ul>
@@ -152,7 +155,7 @@ function CreateClassDialog({ onCreated }: { onCreated: () => void }) {
               <Input id="class-name" name="name" required disabled={create.isPending} placeholder="XII A" />
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={create.isPending}>
+              <Button type="submit" variant="default" disabled={create.isPending}>
                 {create.isPending ? "Menyimpan…" : "Buat kelas"}
               </Button>
             </DialogFooter>

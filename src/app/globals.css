@@ -131,6 +131,18 @@
   html {
     @apply font-sans;
   }
+  /* Ambient backdrop: glass needs something behind it to blur. Blobs sit behind all content. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(42rem 42rem at 12% -8%, rgb(82 153 199 / 0.35), transparent 60%),
+      radial-gradient(50rem 50rem at 105% 15%, rgb(32 59 80 / 0.14), transparent 65%),
+      radial-gradient(36rem 36rem at 50% 115%, rgb(82 153 199 / 0.18), transparent 60%),
+      var(--background);
+  }
 }
 
 /* Liquid glass material. Classes come from liquidGlass() in lib/liquid-glass/material.ts.
@@ -162,7 +174,7 @@
     box-shadow: inset 0 1px 0 var(--lg-highlight), 0 1px 2px var(--lg-drop), 0 12px 32px -14px var(--lg-drop);
   }
 
-  .lg-regular { --lg-base: rgba(255, 255, 255, 0.42); --lg-blur: 16px; --lg-sat: 180%; }
+  .lg-regular { --lg-base: rgba(255, 255, 255, 0.55); --lg-blur: 20px; --lg-sat: 180%; }
   .dark .lg-regular { --lg-base: rgba(255, 255, 255, 0.07); }
   .lg-clear { --lg-base: rgba(255, 255, 255, 0.1); --lg-blur: 2px; --lg-sat: 150%; }
   .dark .lg-clear { --lg-base: rgba(255, 255, 255, 0.04); }
@@ -173,7 +185,7 @@
   .lg-inline { box-shadow: inset 0 1px 0 var(--lg-highlight); }
   .lg-surface { border-radius: 20px; }
   .lg-overlay { border-radius: 20px; }
-  .lg-overlay.lg-regular { --lg-base: rgba(255, 255, 255, 0.72); --lg-blur: 24px; }
+  .lg-overlay.lg-regular { --lg-base: rgba(255, 255, 255, 0.78); --lg-blur: 24px; }
   .dark .lg-overlay.lg-regular { --lg-base: rgba(28, 30, 38, 0.74); }
 
   .lg-control { transition: scale 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s; }
@@ -184,6 +196,7 @@
     .lg-control:active:not(:disabled) { scale: none; }
   }
   @media (prefers-reduced-transparency: reduce) {
+    body::before { background: var(--background); }
     .lg.lg { --lg-base: color-mix(in oklab, var(--background) 94%, transparent); backdrop-filter: none; -webkit-backdrop-filter: none; }
   }
 }
