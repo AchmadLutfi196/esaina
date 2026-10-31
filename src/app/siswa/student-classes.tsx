@@ -65,7 +65,7 @@ export function StudentClasses() {
               className="uppercase tracking-widest"
             />
           </div>
-          <Button type="submit" disabled={join.isPending}>
+          <Button type="submit" variant="default" disabled={join.isPending}>
             {join.isPending ? "Bergabung…" : "Gabung kelas"}
           </Button>
         </div>
