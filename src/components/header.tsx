@@ -28,19 +28,20 @@ export function Header({
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3.5 sm:px-6 md:flex-row md:items-center md:justify-between">
         {/* Identity */}
         <div className="min-w-0">
-          <p className="text-[11px] font-medium text-muted">
+          <p className="text-[11px] font-medium text-[#52697C]">
             Selamat datang kembali,
           </p>
           <div className="mt-0.5 flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-sm font-bold tracking-tight text-ink sm:text-base">
-              {userName}
+            <h1 className="truncate text-[15px] font-semibold text-[#0A1680]">
+              {userName} {role === "teacher" && "(Fisika)"}
             </h1>
-            <span className="glass-pill rounded-full border border-brand-line/50 bg-brand-tint/90 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-brand">
-              {roleLabel}
-            </span>
-            {identifier && (
-              <span className="nums glass-pill hidden rounded-full border border-line-2/80 bg-white/70 px-2.5 py-0.5 text-[10px] font-semibold text-muted sm:inline">
+            {identifier ? (
+              <span className="rounded-[6px] border border-[#EEF4FF] bg-[#EEF4FF] px-2 py-0.5 text-[11px] font-semibold text-[#0A1680]">
                 {identifier}
+              </span>
+            ) : (
+              <span className="rounded-[6px] border border-[#EEF4FF] bg-[#EEF4FF] px-2 py-0.5 text-[11px] font-semibold text-[#0A1680]">
+                {roleLabel}
               </span>
             )}
           </div>
@@ -48,28 +49,28 @@ export function Header({
 
         {/* Actions */}
         <div className="flex items-center gap-2.5">
-          <div className="relative flex-1 md:w-64 md:flex-none">
-            <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+          <div className="relative flex-1 sm:w-[220px] sm:flex-none">
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-[#8A9BAF]" />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Cari asesmen, kelas, siswa…"
+              placeholder="Cari asesmen..."
               aria-label="Cari"
-              className="h-9 w-full rounded-xl border border-white/90 bg-white/70 pr-3 pl-9 text-xs font-medium text-ink shadow-xs backdrop-blur-md transition-all duration-200 placeholder:text-muted/70 focus:bg-white focus:shadow-sm focus-visible:border-brand-line focus-visible:ring-2 focus-visible:ring-brand-line/40 focus-visible:outline-none"
+              className="h-[34px] w-full rounded-[8px] border border-[#D8E3EF] bg-[#F4F7FC] pr-3 pl-8 text-[12px] font-medium text-[#0A1680] shadow-none transition-all placeholder:text-[#8A9BAF] focus:bg-white focus:border-[#0A1680] focus:ring-1 focus:ring-[#0A1680] focus:outline-none"
             />
           </div>
 
           <button
             onClick={onOpenHelp}
-            aria-label="Bantuan"
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/85 bg-white/70 text-muted shadow-xs backdrop-blur-md transition-all duration-200 hover:bg-white hover:text-brand hover:shadow-sm"
+            aria-label="Notifikasi"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-[8px] border border-[#D8E3EF] bg-[#F4F7FC] text-[#0A1680] transition-colors hover:bg-white hover:border-[#0A1680]"
           >
             <Bell className="h-4 w-4" />
           </button>
 
           <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/85 bg-gradient-to-br from-brand to-forest-dark text-xs font-bold text-white shadow-xs"
+            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] bg-gradient-to-br from-brand to-forest-dark text-xs font-bold text-white shadow-xs"
             aria-label={`Avatar ${userName}`}
           >
             {initials(userName)}

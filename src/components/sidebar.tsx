@@ -14,6 +14,9 @@ import {
   GraduationCap,
   Users,
   ChartColumn,
+  BarChart3,
+  PlusSquare,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
 import type { Role } from "@/types";
@@ -26,15 +29,10 @@ interface NavItem {
 }
 
 const teacherNav: NavItem[] = [
-  { href: "/dashboard", label: "Beranda", icon: LayoutDashboard, match: ["/dashboard"] },
-  { href: "/classes", label: "Daftar Kelas", icon: BookOpen, match: ["/classes"] },
-  {
-    href: "/assessments",
-    label: "Daftar Asesmen",
-    icon: FileText,
-    match: ["/assessments"],
-  },
-  { href: "/grading", label: "Ruang Penilaian", icon: Sparkles, match: ["/grading"] },
+  { href: "/dashboard", label: "Dasbor Guru", icon: BarChart3, match: ["/dashboard"] },
+  { href: "/assessments", label: "Daftar Asesmen", icon: FileText, match: ["/assessments"] },
+  { href: "/assessments/new", label: "Buat Asesmen Baru", icon: PlusSquare, match: ["/assessments/new"] },
+  { href: "/grading", label: "Kelola Asesmen", icon: SlidersHorizontal, match: ["/grading"] },
 ];
 
 const studentNav: NavItem[] = [
@@ -86,23 +84,27 @@ export function Sidebar({
         {/* Brand */}
         <Link
           href="/dashboard"
-          className="mb-8 flex flex-col items-center gap-1.5 lg:items-start"
+          className="mb-6 flex flex-col items-center gap-2 lg:items-start"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-forest-dark shadow-[0_6px_20px_rgba(10,22,128,0.28)] lg:h-10 lg:w-10">
-            <span className="font-heading text-lg font-extrabold text-white">E</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#0A1680] shadow-[0_4px_16px_rgba(10,22,128,0.24)]">
+            <span className="font-heading text-xl font-bold text-white">E</span>
           </div>
           <div className="hidden lg:block">
-            <p className="font-heading text-sm font-extrabold tracking-[0.14em] text-brand">
+            <p className="font-heading text-base font-bold tracking-[0.1em] text-[#0A1680]">
               ESAINA
             </p>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
-              {roleLabel}
+            <p className="text-[11px] font-semibold text-[#52697C]">
+              {role === "teacher"
+                ? "Dasbor Guru"
+                : role === "admin"
+                ? "Dasbor Admin"
+                : "Dasbor Siswa"}
             </p>
           </div>
         </Link>
 
         {/* Nav */}
-        <nav aria-label="Navigasi utama" className="space-y-1.5">
+        <nav aria-label="Navigasi utama" className="space-y-1">
           {navItems.map((item) => {
             const active = item.match.some(
               (m) => pathname === m || pathname.startsWith(`${m}/`)
@@ -114,17 +116,14 @@ export function Sidebar({
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200 lg:w-full lg:justify-start lg:gap-3 lg:px-3.5",
+                  "group relative flex h-10 w-10 items-center justify-center rounded-[8px] transition-all duration-150 lg:w-full lg:justify-start lg:gap-2.5 lg:px-3 lg:py-2.5",
                   active
-                    ? "bg-white/80 text-brand shadow-[0_4px_16px_rgba(10,22,128,0.06),inset_0_1px_1px_rgba(255,255,255,1)] border border-brand-line/40 font-bold"
-                    : "text-muted hover:bg-white/70 hover:text-ink hover:shadow-xs"
+                    ? "bg-[#EEF4FF] text-[#0A1680] font-semibold"
+                    : "text-[#52697C] font-medium hover:bg-[#F4F7FC] hover:text-[#0A1680]"
                 )}
               >
-                {active && (
-                  <span className="absolute left-0 h-6 w-1 rounded-r-full bg-brand shadow-sm shadow-brand/40" />
-                )}
-                <Icon className={cn("h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-105", active ? "text-brand" : "text-muted")} />
-                <span className="hidden text-xs font-semibold lg:inline">
+                <Icon className={cn("h-4 w-4 shrink-0", active ? "text-[#0A1680]" : "text-[#52697C] group-hover:text-[#0A1680]")} />
+                <span className="hidden text-[13px] lg:inline">
                   {item.label}
                 </span>
               </Link>

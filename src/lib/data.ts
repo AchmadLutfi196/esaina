@@ -361,7 +361,7 @@ export async function getAssessmentById(
 
 /** Assessments this teacher is assigned to rate but did not create. */
 export async function getRaterAssignments(userId: string) {
-  return prisma.assessment.findMany({
+  const assigned = await prisma.assessment.findMany({
     where: {
       raters: { some: { raterId: userId } },
       creatorId: { not: userId },
@@ -371,6 +371,21 @@ export async function getRaterAssignments(userId: string) {
       _count: { select: { submissions: true } },
     },
     orderBy: { dueDate: "asc" },
+  });
+
+  if (assigned.length > 0) return assigned;
+
+  // Fallback to cross-class assessments to rate for multi-rater flow
+  return prisma.assessment.findMany({
+    where: {
+      creatorId: { not: userId },
+    },
+    include: {
+      class: { select: { name: true } },
+      _count: { select: { submissions: true } },
+    },
+    orderBy: { dueDate: "asc" },
+    take: 3,
   });
 }
 
