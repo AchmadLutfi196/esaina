@@ -28,49 +28,47 @@ export function Header({
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3.5 sm:px-6 md:flex-row md:items-center md:justify-between">
         {/* Identity */}
         <div className="min-w-0">
-          <p className="text-[11px] font-medium text-[#52697C]">
+          <p className="text-[11px] font-medium text-muted">
             Selamat datang kembali,
           </p>
           <div className="mt-0.5 flex flex-wrap items-center gap-2">
-            <h1 className="truncate text-[15px] font-semibold text-[#0A1680]">
+            <h1 className="truncate text-base font-bold tracking-tight text-ink">
               {userName} {role === "teacher" && "(Fisika)"}
             </h1>
-            {identifier ? (
-              <span className="rounded-[6px] border border-[#EEF4FF] bg-[#EEF4FF] px-2 py-0.5 text-[11px] font-semibold text-[#0A1680]">
-                {identifier}
-              </span>
-            ) : (
-              <span className="rounded-[6px] border border-[#EEF4FF] bg-[#EEF4FF] px-2 py-0.5 text-[11px] font-semibold text-[#0A1680]">
-                {roleLabel}
-              </span>
-            )}
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B8E2D8] bg-[#E6F4F1] px-2.5 py-0.5 text-[11px] font-bold text-[#0D523C]">
+              <span>👤</span>
+              <span>{roleLabel} {identifier ? `(${identifier})` : ""}</span>
+            </span>
           </div>
+          <p className="text-xs text-muted mt-0.5">
+            Ringkasan asesmen dan tugas penilaian Anda
+          </p>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2.5">
-          <div className="relative flex-1 sm:w-[220px] sm:flex-none">
-            <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-[#8A9BAF]" />
+          <div className="relative flex-1 sm:w-60 sm:flex-none">
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Cari asesmen..."
               aria-label="Cari"
-              className="h-[34px] w-full rounded-[8px] border border-[#D8E3EF] bg-[#F4F7FC] pr-3 pl-8 text-[12px] font-medium text-[#0A1680] shadow-none transition-all placeholder:text-[#8A9BAF] focus:bg-white focus:border-[#0A1680] focus:ring-1 focus:ring-[#0A1680] focus:outline-none"
+              className="h-9 w-full rounded-xl border border-gray-200 bg-white pr-3 pl-9 text-xs font-medium text-ink shadow-2xs transition-all placeholder:text-muted focus:bg-white focus:border-[#1E3A2F] focus:outline-none"
             />
           </div>
 
           <button
             onClick={onOpenHelp}
-            aria-label="Notifikasi"
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-[8px] border border-[#D8E3EF] bg-[#F4F7FC] text-[#0A1680] transition-colors hover:bg-white hover:border-[#0A1680]"
+            aria-label="Bantuan"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-gray-200 bg-white text-muted shadow-2xs transition-colors hover:text-[#1E3A2F] hover:border-[#1E3A2F]"
           >
             <Bell className="h-4 w-4" />
           </button>
 
           <div
-            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[8px] bg-gradient-to-br from-brand to-forest-dark text-xs font-bold text-white shadow-xs"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1E3A2F] text-xs font-bold text-white shadow-2xs"
             aria-label={`Avatar ${userName}`}
           >
             {initials(userName)}

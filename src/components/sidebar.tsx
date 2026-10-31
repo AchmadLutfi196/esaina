@@ -14,9 +14,7 @@ import {
   GraduationCap,
   Users,
   ChartColumn,
-  BarChart3,
-  PlusSquare,
-  SlidersHorizontal,
+  NotebookPen,
 } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
 import type { Role } from "@/types";
@@ -29,10 +27,11 @@ interface NavItem {
 }
 
 const teacherNav: NavItem[] = [
-  { href: "/dashboard", label: "Dasbor Guru", icon: BarChart3, match: ["/dashboard"] },
+  { href: "/dashboard", label: "Dasbor Guru", icon: LayoutDashboard, match: ["/dashboard"] },
   { href: "/assessments", label: "Daftar Asesmen", icon: FileText, match: ["/assessments"] },
-  { href: "/assessments/new", label: "Buat Asesmen Baru", icon: PlusSquare, match: ["/assessments/new"] },
-  { href: "/grading", label: "Kelola Asesmen", icon: SlidersHorizontal, match: ["/grading"] },
+  { href: "/assessments/new", label: "Buat Asesmen Baru", icon: NotebookPen, match: ["/assessments/new"] },
+  { href: "/classes", label: "Daftar Kelas", icon: BookOpen, match: ["/classes"] },
+  { href: "/grading", label: "Ruang Penilaian", icon: Sparkles, match: ["/grading"] },
 ];
 
 const studentNav: NavItem[] = [
@@ -86,14 +85,14 @@ export function Sidebar({
           href="/dashboard"
           className="mb-6 flex flex-col items-center gap-2 lg:items-start"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#0A1680] shadow-[0_4px_16px_rgba(10,22,128,0.24)]">
-            <span className="font-heading text-xl font-bold text-white">E</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E6F4F1] border border-[#B8E2D8] text-[#1E3A2F] shadow-xs">
+            <GraduationCap className="h-5 w-5" />
           </div>
           <div className="hidden lg:block">
-            <p className="font-heading text-base font-bold tracking-[0.1em] text-[#0A1680]">
+            <p className="font-heading text-base font-bold tracking-[0.1em] text-ink">
               ESAINA
             </p>
-            <p className="text-[11px] font-semibold text-[#52697C]">
+            <p className="text-[11px] font-semibold text-muted">
               {role === "teacher"
                 ? "Dasbor Guru"
                 : role === "admin"
@@ -116,14 +115,14 @@ export function Sidebar({
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group relative flex h-10 w-10 items-center justify-center rounded-[8px] transition-all duration-150 lg:w-full lg:justify-start lg:gap-2.5 lg:px-3 lg:py-2.5",
+                  "group relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 lg:w-full lg:justify-start lg:gap-2.5 lg:px-3 lg:py-2.5",
                   active
-                    ? "bg-[#EEF4FF] text-[#0A1680] font-semibold"
-                    : "text-[#52697C] font-medium hover:bg-[#F4F7FC] hover:text-[#0A1680]"
+                    ? "bg-[#FFF2EB] text-[#C2410C] font-bold shadow-2xs border border-[#FED7AA]"
+                    : "text-muted font-medium hover:bg-slate-100 hover:text-ink"
                 )}
               >
-                <Icon className={cn("h-4 w-4 shrink-0", active ? "text-[#0A1680]" : "text-[#52697C] group-hover:text-[#0A1680]")} />
-                <span className="hidden text-[13px] lg:inline">
+                <Icon className={cn("h-4 w-4 shrink-0", active ? "text-[#C2410C]" : "text-muted group-hover:text-ink")} />
+                <span className="hidden text-xs font-semibold lg:inline">
                   {item.label}
                 </span>
               </Link>
