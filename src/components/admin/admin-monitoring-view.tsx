@@ -12,19 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { type Assessment } from "@/types";
 
-interface RaterAssignment {
-  assessmentId: string;
-  assessmentTitle: string;
-  raterId: string;
-  raterName: string;
-}
-
 export function AdminMonitoringView({
   assessments,
-  raterAssignments,
 }: {
   assessments: Assessment[];
-  raterAssignments: RaterAssignment[];
 }) {
   const [selectedId, setSelectedId] = useState(assessments[0]?.id ?? "");
 
@@ -43,7 +34,7 @@ export function AdminMonitoringView({
 
   return (
     <div className="animate-fade-up space-y-6">
-      {/* Top Header matching 09 · Admin detail monitoring.png */}
+      {/* Top Header */}
       <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/80 bg-white/85 p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] backdrop-blur-md sm:flex-row sm:items-center">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -62,10 +53,10 @@ export function AdminMonitoringView({
             </span>
           </div>
           <h1 className="font-heading text-2xl font-extrabold tracking-wide text-brand sm:text-3xl">
-            DETAIL MONITORING ASESMEN & KONSENSUS
+            DETAIL MONITORING ASESMEN & EVALUASI
           </h1>
           <p className="text-xs text-muted sm:text-sm">
-            {selected?.title ?? "Ulangan Harian"} · Pemantauan kepatuhan multi-rater dan batas waktu.
+            {selected?.title ?? "Ulangan Harian"} · Pemantauan progres penyelesaian penilaian guru dan verifikasi AI.
           </p>
         </div>
 
@@ -88,21 +79,21 @@ export function AdminMonitoringView({
         )}
       </div>
 
-      {/* 4 Chip Metric Cards matching 09 · Admin detail monitoring.png */}
+      {/* 4 Chip Metric Cards */}
       <section
         aria-label="Chip Metrik Asesmen"
         className="grid grid-cols-2 gap-4 lg:grid-cols-4"
       >
         <div className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)]">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted">
-            Target Penilai
+            Guru Pengampu
           </span>
           <div className="mt-2">
             <span className="font-heading text-3xl font-extrabold text-brand">
-              {selected?.raterCount || 2}
+              1 Guru
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted">Evaluator per LJK</p>
+          <p className="mt-1 text-xs text-muted">Evaluator Utama</p>
         </div>
 
         <div className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)]">
@@ -142,44 +133,44 @@ export function AdminMonitoringView({
         </div>
       </section>
 
-      {/* Section: PROGRES PENILAIAN PER EVALUATOR matching 09 · Admin detail monitoring.png */}
+      {/* Section: PROGRES PENILAIAN GURU & ASISTENSI AI */}
       <section className="space-y-4">
         <h2 className="font-heading text-base font-extrabold tracking-wider text-brand uppercase">
-          PROGRES PENILAIAN PER EVALUATOR
+          PROGRES PENILAIAN GURU & ASISTENSI AI
         </h2>
 
         <div className="rounded-2xl border border-white/90 bg-white p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] space-y-6">
-          {/* Evaluator 1 */}
+          {/* Guru Pengampu */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-ink sm:text-sm">
-                1. Dra. Sri Wahyuni, M.Pd. (Evaluator Utama)
+                1. Guru Pengampu Mata Pelajaran ({selected?.className ?? "Kelas"})
               </span>
               <span className="font-bold text-brand font-mono">
-                {totalSubmitted || 90} / {totalSubmitted || 90} jawaban (100%)
+                {finalGraded} / {totalSubmitted} LJK disahkan ({progressPercent}%)
               </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
               <div
                 className="h-full rounded-full bg-brand transition-all"
-                style={{ width: "100%" }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
 
-          {/* Evaluator 2 */}
+          {/* Asistensi AI IndoBERT */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-ink sm:text-sm">
-                2. Budi Santoso, S.Pd. (Evaluator Pendamping)
+                2. Model Analisis Semantik AI (IndoBERT)
               </span>
-              <span className="font-bold text-brand font-mono">
-                {totalSubmitted || 90} / {totalSubmitted || 90} jawaban (100%)
+              <span className="font-bold text-emerald-700 font-mono">
+                Siap & Aktif Memberikan Rekomendasi
               </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-brand transition-all"
+                className="h-full rounded-full bg-emerald-600 transition-all"
                 style={{ width: "100%" }}
               />
             </div>
@@ -188,7 +179,7 @@ export function AdminMonitoringView({
           <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-xs text-emerald-900 flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
             <span>
-              Seluruh evaluator telah menyelesaikan penilaian LJK. Selisih skor antar penilai berada di bawah batas ambang konsensus (selisih &lt; 15%).
+              Penilaian LJK berjalan optimal dengan verifikasi guru pengampu dan asistensi rubrik kriteria berbasis model AI IndoBERT.
             </span>
           </div>
         </div>

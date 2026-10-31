@@ -30,8 +30,8 @@ export function AdminDashboard({
     {
       label: "TOTAL GURU",
       value: stats.teachers || 21,
-      sub: "Guru Evaluator",
-      foot: "Peran Penilai Multi-Rater",
+      sub: "Guru Pengampu",
+      foot: "Guru Mata Pelajaran",
       tone: "brand",
       icon: Users,
       href: "/admin/users?role=teacher",
@@ -72,14 +72,14 @@ export function AdminDashboard({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 uppercase">
-              Sistem Multi-Rater & NLP Aktif
+              Sistem Penilaian Guru & NLP Aktif
             </span>
           </div>
           <h1 className="font-heading text-2xl font-extrabold tracking-wide text-brand sm:text-3xl">
-            DASBOR ADMIN — MONITORING KONSENSUS MULTI-RATER
+            DASBOR ADMIN — MONITORING ASESMEN & EVALUASI AI
           </h1>
           <p className="text-xs text-muted sm:text-sm">
-            Kelola akun guru dan siswa, pantau alokasi penilai per asesmen, serta verifikasi konsistensi penilaian esai lintas penilai.
+            Kelola akun guru dan siswa, pantau progres penilaian per asesmen, serta tinjau akurasi rekomendasi penilaian AI.
           </p>
         </div>
 

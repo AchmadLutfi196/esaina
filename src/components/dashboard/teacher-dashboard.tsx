@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { formatDueDate, cn } from "@/lib/utils";
 import { ASSESSMENT_STATUS_LABEL, type Assessment, type ClassItem } from "@/types";
 
-interface RaterAssignment {
+interface PendingGradingTask {
   id: string;
   title: string;
   subject: string;
@@ -30,7 +30,7 @@ export function TeacherDashboard({
   stats,
   classes,
   assessments,
-  raterAssignments,
+  pendingTasks = [],
 }: {
   user: { name: string; role: string };
   stats: {
@@ -42,8 +42,9 @@ export function TeacherDashboard({
   };
   classes: ClassItem[];
   assessments: Assessment[];
-  raterAssignments: RaterAssignment[];
+  pendingTasks?: PendingGradingTask[];
 }) {
+  const tasks = pendingTasks;
   const activeAssessments = assessments.filter((a) => a.status === "active");
   const displayAssessments = (activeAssessments.length > 0 ? activeAssessments : assessments).slice(0, 4);
 
@@ -239,25 +240,25 @@ export function TeacherDashboard({
           )}
         </section>
 
-        {/* Right Column: Tugas Sebagai Penilai (5 cols) */}
+        {/* Right Column: Antrean Penilaian Guru (5 cols) */}
         <section className="space-y-4 lg:col-span-5">
           <div className="flex items-center justify-between">
             <h2 className="font-heading text-base font-extrabold tracking-wider text-brand uppercase">
-              TUGAS SEBAGAI PENILAI
+              ANTREAN PENILAIAN
             </h2>
             <span className="rounded-full border border-line bg-paper px-2 py-0.5 text-xs font-bold text-muted">
-              {raterAssignments.length} Tugas
+              {tasks.length} Asesmen
             </span>
           </div>
 
           <div className="rounded-2xl border border-white/90 bg-white p-5 shadow-[0_4px_24px_rgba(10,22,128,0.04)]">
-            {raterAssignments.length === 0 ? (
+            {tasks.length === 0 ? (
               <p className="py-6 text-center text-xs text-muted">
-                Tidak ada tugas penilaian tertunda untuk akun Anda saat ini.
+                Tidak ada tugas penilaian tertunda untuk kelas Anda saat ini.
               </p>
             ) : (
               <ul className="divide-y divide-line/40">
-                {raterAssignments.map((task) => (
+                {tasks.map((task) => (
                   <li
                     key={task.id}
                     className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
@@ -267,17 +268,17 @@ export function TeacherDashboard({
                         {task.title}
                       </h4>
                       <p className="truncate text-[11px] text-muted">
-                        {task.subject} - {task.className} · Tidak ada jawaban tertunda
+                        {task.subject} - {task.className} · {task.submissionCount > 0 ? `${task.submissionCount} LJK siap dinilai` : "Belum ada LJK terkumpul"}
                       </p>
                     </div>
 
-                    <Link href={`/assessments/${task.id}`}>
+                    <Link href={`/grading/${task.id}`}>
                       <Button
                         variant="outline"
                         size="sm"
                         className="rounded-lg border-line px-3 text-xs font-semibold hover:border-brand hover:text-brand"
                       >
-                        Lihat
+                        Nilai
                       </Button>
                     </Link>
                   </li>

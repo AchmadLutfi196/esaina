@@ -54,7 +54,7 @@ export function AssessmentsListView({
             DAFTAR ASESMEN
           </h1>
           <p className="text-xs text-muted sm:text-sm">
-            Semua asesmen yang dapat Anda akses sebagai koordinator maupun penilai.
+            Semua paket asesmen esai kelas yang Anda ampu dan evaluasi.
           </p>
         </div>
 

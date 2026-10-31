@@ -35,31 +35,6 @@ export function getAssessmentMaxScore(
   return assessment.questions.reduce((sum, q) => sum + q.maxScore, 0);
 }
 
-/** Aggregate multi-rater scores into the summary shown in review pages. */
-export function aggregateRaterScores(scores: number[]): {
-  average: number;
-  highest: number;
-  lowest: number;
-  range: number;
-  count: number;
-} {
-  if (scores.length === 0) {
-    return { average: 0, highest: 0, lowest: 0, range: 0, count: 0 };
-  }
-  const highest = Math.max(...scores);
-  const lowest = Math.min(...scores);
-  return {
-    average: Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10,
-    highest,
-    lowest,
-    range: highest - lowest,
-    count: scores.length,
-  };
-}
-
-/** A range wider than this suggests raters should discuss before finalising. */
-export const CONSENSUS_WARNING_THRESHOLD = 15;
-
 export interface ScoreBreakdown {
   criterionId: string;
   criterionName: string;

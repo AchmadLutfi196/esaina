@@ -61,11 +61,11 @@ export function HelpDialog({
             ],
             [
               "2. Pantau asesmen",
-              "Halaman Monitoring merangkum progres penilaian tiap asesmen beserta capaian per penilai.",
+              "Halaman Monitoring merangkum progres penilaian tiap asesmen beserta capaian guru pengampu.",
             ],
             [
-              "3. Verifikasi konsensus",
-              "Selisih skor antar penilai yang lebar ditandai agar koordinator dapat meninjau sebelum publikasi.",
+              "3. Verifikasi & terbitkan nilai",
+              "Pantau penyelesaian penilaian oleh guru pengampu dan verifikasi kesiapan publikasi hasil esai siswa.",
             ],
           ];
 

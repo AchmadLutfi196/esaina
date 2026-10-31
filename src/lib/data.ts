@@ -298,12 +298,7 @@ export async function getAssessmentsForUser(userId: string, role: string) {
       ? { class: { enrollments: { some: { studentId: userId } } } }
       : role === "admin"
         ? {}
-        : {
-            OR: [
-              { creatorId: userId },
-              { raters: { some: { raterId: userId } } },
-            ],
-          };
+        : { creatorId: userId };
 
   const rows = await prisma.assessment.findMany({
     where,
@@ -345,12 +340,7 @@ export async function getAssessmentById(
         ? { class: { enrollments: { some: { studentId: userId } } } }
         : role === "admin"
           ? {}
-          : {
-              OR: [
-                { creatorId: userId },
-                { raters: { some: { raterId: userId } } },
-              ],
-            }),
+          : { creatorId: userId }),
     },
     include: assessmentInclude,
   });
@@ -359,26 +349,40 @@ export async function getAssessmentById(
   return toAssessment(row as unknown as RawAssessment);
 }
 
-/** Assessments this teacher is assigned to rate but did not create. */
-export async function getRaterAssignments(userId: string) {
-  const assigned = await prisma.assessment.findMany({
+/** Assessments created by this teacher that have pending submissions awaiting grading. */
+export async function getPendingGradingAssessments(userId: string) {
+  const pending = await prisma.assessment.findMany({
     where: {
-      raters: { some: { raterId: userId } },
-      creatorId: { not: userId },
+      creatorId: userId,
+      submissions: {
+        some: {
+          statusWork: "submitted",
+          statusGrading: { not: "final" },
+        },
+      },
     },
     include: {
       class: { select: { name: true } },
-      _count: { select: { submissions: true } },
+      _count: {
+        select: {
+          submissions: {
+            where: {
+              statusWork: "submitted",
+              statusGrading: { not: "final" },
+            },
+          },
+        },
+      },
     },
     orderBy: { dueDate: "asc" },
   });
 
-  if (assigned.length > 0) return assigned;
+  if (pending.length > 0) return pending;
 
-  // Fallback to cross-class assessments to rate for multi-rater flow
+  // Fallback to active assessments created by this teacher
   return prisma.assessment.findMany({
     where: {
-      creatorId: { not: userId },
+      creatorId: userId,
     },
     include: {
       class: { select: { name: true } },

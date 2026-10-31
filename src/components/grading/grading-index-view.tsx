@@ -18,21 +18,10 @@ import {
   type Assessment,
 } from "@/types";
 
-interface RaterAssignment {
-  id: string;
-  title: string;
-  subject: string;
-  className: string;
-  submissionCount: number;
-  dueDate: string;
-}
-
 export function GradingIndexView({
   assessments,
-  raterAssignments,
 }: {
   assessments: Assessment[];
-  raterAssignments: RaterAssignment[];
 }) {
   const pending = assessments
     .map((a) => {
@@ -152,42 +141,6 @@ export function GradingIndexView({
           </div>
         )}
       </div>
-
-      {/* Rater assignments */}
-      {raterAssignments.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-bold text-brand">
-            Tugas sebagai Penilai Tambahan
-          </h2>
-          <Card className="divide-y divide-line/30">
-            {raterAssignments.map((a) => (
-              <div
-                key={a.id}
-                className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-brand">
-                    {a.title}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {a.subject} • {a.className}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <span className="flex items-center gap-1 text-xs font-bold text-amber-600">
-                    <Users className="h-3 w-3" /> {a.submissionCount} esai
-                  </span>
-                  <Link href={`/grading/${a.id}`}>
-                    <span className="cursor-pointer rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white">
-                      Nilai
-                    </span>
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

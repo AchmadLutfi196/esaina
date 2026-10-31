@@ -16,7 +16,6 @@ export async function POST(request: Request) {
     subject,
     durationMinutes,
     dueDate,
-    raterCount,
     instructions,
     questions,
   } = body;
@@ -40,8 +39,8 @@ export async function POST(request: Request) {
         subject: subject.trim(),
         dueDate: new Date(dueDate),
         durationMinutes: Number(durationMinutes) || 60,
-        raterCount: Number(raterCount) || 1,
-        targetRaters: Number(raterCount) || 1,
+        raterCount: 1,
+        targetRaters: 1,
         instructions: instructions || "",
         status: "active",
         publicationStatus: "unpublished",

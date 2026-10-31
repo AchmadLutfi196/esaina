@@ -121,7 +121,7 @@ export function StudentResultView({
             </div>
             <div className="flex justify-between">
               <span className="text-muted">Evaluator:</span>
-              <strong className="text-brand">Tim Multi-Rater Guru</strong>
+              <strong className="text-brand">Guru Pengampu Mata Pelajaran</strong>
             </div>
             <div className="flex justify-between">
               <span className="text-muted">Waktu Kumpul:</span>

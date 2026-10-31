@@ -53,7 +53,6 @@ export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
   const [subject, setSubject] = useState(classes[0]?.subject ?? "Biologi");
   const [duration, setDuration] = useState(60);
   const [dueDate, setDueDate] = useState("2026-11-05T23:59");
-  const [raterCount, setRaterCount] = useState(2);
   const [instructions, setInstructions] = useState(
     "Jawablah seluruh pertanyaan dengan uraian ilmiah, jelas, dan menyertakan mekanisme biokimia secara runtut."
   );
@@ -141,7 +140,6 @@ export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
           subject,
           durationMinutes: duration,
           dueDate,
-          raterCount,
           instructions,
           status,
           questions,
@@ -295,16 +293,12 @@ export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
                 />
               </Field>
 
-              <Field label="Target Penilai *">
-                <Select
-                  value={String(raterCount)}
-                  onChange={(e) => setRaterCount(Number(e.target.value) || 1)}
-                  className="bg-paper/40"
-                >
-                  <option value="1">1 Penilai (Tunggal)</option>
-                  <option value="2">2 Penilai (Multi-Rater)</option>
-                  <option value="3">3 Penilai (Konsensus Penuh)</option>
-                </Select>
+              <Field label="Model Penilaian">
+                <Input
+                  disabled
+                  value="Guru Pengampu + Asistensi AI IndoBERT"
+                  className="bg-paper/40 font-semibold text-brand"
+                />
               </Field>
             </div>
 
@@ -502,7 +496,7 @@ export function NewAssessmentView({ classes }: { classes: ClassItem[] }) {
               Panduan Pembuatan
             </h3>
             <p className="text-xs leading-relaxed text-muted">
-              Sistem ESAINA menggunakan kunci acuan dan kriteria rubrik ini untuk memandu model IndoBERT dan tim evaluator multi-rater memberikan skor yang konsisten dan akurat.
+              Sistem ESAINA menggunakan kunci acuan dan kriteria rubrik ini untuk memandu model IndoBERT dan guru pengampu dalam memberikan skor yang konsisten, objektif, dan akurat.
             </p>
           </div>
         </aside>

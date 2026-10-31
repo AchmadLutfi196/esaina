@@ -154,7 +154,7 @@ export function AssessmentDetailView({
 
   return (
     <div className="animate-fade-up space-y-6">
-      {/* Top Header matching 06 · Guru rekap & konsensus.png */}
+      {/* Top Header */}
       <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/80 bg-white/85 p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] backdrop-blur-md sm:flex-row sm:items-center">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -213,7 +213,7 @@ export function AssessmentDetailView({
         </div>
       )}
 
-      {/* 4 Status Metric Cards matching 06 · Guru rekap & konsensus.png */}
+      {/* 4 Status Metric Cards */}
       <section
         aria-label="Status Ringkasan LJK"
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
@@ -287,22 +287,21 @@ export function AssessmentDetailView({
         </div>
       </section>
 
-      {/* Multi-Rater Consensus Bar matching 06 · Guru rekap & konsensus.png */}
+      {/* Progress Penilaian Guru */}
       <div className="flex flex-col justify-between gap-3 rounded-2xl border border-bleu-ciel/50 bg-[#F0F5FF] p-4 text-xs sm:flex-row sm:items-center">
         <div className="flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1.5 font-bold text-brand">
-            <BarChart3 className="h-4 w-4 shrink-0" />
-            <span>Progres Multi-Rater:</span>
+            <BarChart3 className="h-4 w-4 shrink-0 text-brand" />
+            <span>Progres Penilaian Guru:</span>
           </span>
           <span className="rounded-md border border-bleu-ciel/60 bg-white px-2.5 py-1 font-semibold text-brand">
-            Penilai 1: Dra. Sri Wahyuni (100% Selesai)
-          </span>
-          <span className="rounded-md border border-bleu-ciel/60 bg-white px-2.5 py-1 font-semibold text-brand">
-            Penilai 2: Budi Santoso (100% Selesai)
+            {finalGraded} dari {submitted} LJK Selesai Dinilai ({submitted > 0 ? Math.round((finalGraded / submitted) * 100) : 0}%)
           </span>
         </div>
         <div className="rounded-md border border-emerald-300 bg-emerald-100/70 px-3 py-1 font-bold text-emerald-900">
-          Tingkat Konsensus: 94.2% (Konsisten)
+          {finalGraded === submitted && submitted > 0
+            ? "Semua LJK Selesai Dinilai"
+            : `${submitted - finalGraded} LJK Menunggu Finalisasi`}
         </div>
       </div>
 
@@ -318,7 +317,7 @@ export function AssessmentDetailView({
               : "text-muted hover:bg-paper hover:text-ink"
           )}
         >
-          Rekapitulasi Konsensus
+          Rekapitulasi Nilai Siswa
         </button>
         <button
           type="button"
@@ -364,7 +363,7 @@ export function AssessmentDetailView({
             </div>
           </div>
 
-          {/* Table matching 06 · Guru rekap & konsensus.png */}
+          {/* Recap Table */}
           <div className="overflow-hidden rounded-2xl border border-white/80 bg-white shadow-[0_4px_24px_rgba(10,22,128,0.04)]">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">

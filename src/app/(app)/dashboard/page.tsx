@@ -4,7 +4,7 @@ import {
   getAdminStats,
   getAssessmentsForUser,
   getClassesForUser,
-  getRaterAssignments,
+  getPendingGradingAssessments,
   getTeacherStats,
 } from "@/lib/data";
 import { TeacherDashboard } from "@/components/dashboard/teacher-dashboard";
@@ -37,9 +37,9 @@ export default async function DashboardPage() {
   }
 
   if (role === "teacher") {
-    const [stats, raterAssignments] = await Promise.all([
+    const [stats, pendingTasks] = await Promise.all([
       getTeacherStats(id),
-      getRaterAssignments(id),
+      getPendingGradingAssessments(id),
     ]);
     return (
       <TeacherDashboard
@@ -47,7 +47,7 @@ export default async function DashboardPage() {
         stats={stats}
         classes={classes}
         assessments={assessments}
-        raterAssignments={raterAssignments.map((a) => ({
+        pendingTasks={pendingTasks.map((a) => ({
           id: a.id,
           title: a.title,
           subject: a.subject,
