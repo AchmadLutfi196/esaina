@@ -113,10 +113,15 @@ export function TeacherDashboard({
               Aktif
             </span>
           </div>
-          <div className="mt-3">
+          <div className="mt-3 flex items-center justify-between">
             <span className="font-heading text-4xl font-extrabold text-brand">
               {stats.total}
             </span>
+            <img
+              src="/icons/3d/web-design.png"
+              alt="Asesmen 3D"
+              className="h-10 w-10 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-110"
+            />
           </div>
           <p className="mt-1 text-xs text-muted">Asesmen esai terdaftar</p>
         </div>
@@ -132,10 +137,15 @@ export function TeacherDashboard({
               Aktif
             </span>
           </div>
-          <div className="mt-3">
+          <div className="mt-3 flex items-center justify-between">
             <span className="font-heading text-4xl font-extrabold text-brand">
               {stats.progressPercent}%
             </span>
+            <img
+              src="/icons/3d/diploma.png"
+              alt="Selesai 3D"
+              className="h-10 w-10 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-110"
+            />
           </div>
           <p className="mt-1 text-xs text-muted">Asesmen telah dinilai penuh</p>
         </div>
@@ -151,10 +161,15 @@ export function TeacherDashboard({
               Aktif
             </span>
           </div>
-          <div className="mt-3">
+          <div className="mt-3 flex items-center justify-between">
             <span className="font-heading text-4xl font-extrabold text-brand">
               {stats.pendingGrading}
             </span>
+            <img
+              src="/icons/3d/ai-component.png"
+              alt="AI 3D"
+              className="h-10 w-10 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-110"
+            />
           </div>
           <p className="mt-1 text-xs text-muted">Jawaban menunggu skor Anda</p>
         </div>

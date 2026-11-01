@@ -133,9 +133,11 @@ export function StudentExamView({
         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-heading text-lg font-extrabold tracking-wider text-brand">
-                ESAINA
-              </span>
+              <img
+                src="/brand/esaina-logo.png"
+                alt="ESAINA"
+                className="h-6 w-auto object-contain"
+              />
               <span className="text-muted" aria-hidden>
                 ·
               </span>

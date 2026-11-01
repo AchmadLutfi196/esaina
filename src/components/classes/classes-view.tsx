@@ -1,33 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BookOpen,
   Check,
+  CheckCircle2,
   Copy,
-  FileText,
   FolderOpen,
   ArrowRight,
   Calendar,
   KeyRound,
   Plus,
   Users,
-  X,
-  Info,
+  Search,
+  GraduationCap,
+  ShieldCheck,
+  Loader2,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
-import { Input, Select, Field } from "@/components/ui/input";
-import { formatDueDate } from "@/lib/utils";
-import {
-  ASSESSMENT_STATUS_LABEL,
-  type Assessment,
-  type ClassItem,
-  type Role,
-} from "@/types";
+import { Input, Field } from "@/components/ui/input";
+import type { Assessment, ClassItem, Role } from "@/types";
 
 const bannerGradients = [
   "from-[#0A1680] via-[#13259C] to-[#1E3A8A]",
@@ -35,17 +31,30 @@ const bannerGradients = [
   "from-[#081266] via-[#12228A] to-[#233B9E]",
 ];
 
+const class3dIcons = [
+  "/icons/3d/web-design.png",
+  "/icons/3d/ai-component.png",
+  "/icons/3d/source-code.png",
+  "/icons/3d/laptop-coding.png",
+  "/icons/3d/website.png",
+  "/icons/3d/domain.png",
+];
+
 export function ClassesView({
   role,
   classes,
-  assessments,
 }: {
   role: Role;
   classes: ClassItem[];
-  assessments: Assessment[];
+  assessments?: Assessment[];
 }) {
+  const router = useRouter();
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [newClassName, setNewClassName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const handleCopy = (e: React.MouseEvent, id: string, code: string) => {
     e.preventDefault();
@@ -55,29 +64,78 @@ export function ClassesView({
     setTimeout(() => setCopiedId(null), 1800);
   };
 
+  const handleCreateClass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClassName.trim()) return;
+    setIsSubmitting(true);
+    setCreateError(null);
+
+    try {
+      const res = await fetch("/api/classes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newClassName.trim() }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || data?.error || "Gagal membuat kelas.");
+      }
+
+      setNewClassName("");
+      setCreateOpen(false);
+      router.refresh();
+    } catch (err: any) {
+      setCreateError(err.message || "Terjadi kesalahan.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredClasses = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return classes;
+    return classes.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.subject.toLowerCase().includes(q) ||
+        c.classCode.toLowerCase().includes(q) ||
+        (c.teacherName && c.teacherName.toLowerCase().includes(q))
+    );
+  }, [classes, searchQuery]);
+
   return (
     <div className="animate-fade-up space-y-6">
       {/* Header */}
       <div className="glass-panel flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 rounded-full border border-orange-pastel bg-butter-yellow px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-brand">
-            <BookOpen className="h-3.5 w-3.5" />
-            <span>
-              {role === "teacher"
-                ? "Manajemen Kelas & Asesmen"
-                : "Ruang Kelas Siswa"}
-            </span>
+        <div className="flex items-center gap-4">
+          <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-line/60 bg-white/80 p-2 shadow-xs sm:flex">
+            <img
+              src="/icons/3d/classroom.png"
+              alt="Ruang Kelas 3D"
+              className="h-10 w-10 object-contain drop-shadow-sm transition-transform duration-300 hover:scale-110"
+            />
           </div>
-          <h1 className="text-xl font-extrabold tracking-tight text-brand sm:text-2xl">
-            {role === "teacher"
-              ? "Daftar Kelas yang Diajar"
-              : "Daftar Kelas Saya"}
-          </h1>
-          <p className="text-xs text-muted sm:text-sm">
-            {role === "teacher"
-              ? "Kelola kelas dan asesmen esai Anda. Klik kartu kelas untuk membuka ruang kelas."
-              : "Pilih kelas untuk melihat daftar tugas asesmen esai dari guru."}
-          </p>
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-pastel bg-butter-yellow px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-brand">
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>
+                {role === "teacher"
+                  ? "Manajemen Ruang Kelas"
+                  : "Ruang Kelas Siswa"}
+              </span>
+            </div>
+            <h1 className="text-xl font-extrabold tracking-tight text-brand sm:text-2xl">
+              {role === "teacher"
+                ? "Daftar Kelas yang Diajar"
+                : "Daftar Kelas Saya"}
+            </h1>
+            <p className="text-xs text-muted sm:text-sm">
+              {role === "teacher"
+                ? "Informasi ruang kelas yang Anda ampu. Klik kartu untuk masuk ke detail tugas dan rekap nilai."
+                : "Pilih kelas untuk masuk ke ruang kelas dan mengerjakan tugas asesmen dari guru."}
+            </p>
+          </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-2.5">
@@ -97,35 +155,51 @@ export function ClassesView({
         </div>
       </div>
 
+      {/* Search & Overview Filter Bar */}
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div className="relative max-w-sm flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Cari nama kelas, mapel, kode kelas, guru..."
+            className="pl-9 text-xs"
+          />
+        </div>
+
+        <span className="text-xs font-semibold text-muted">
+          Menampilkan <strong className="text-brand">{filteredClasses.length}</strong> dari{" "}
+          <strong className="text-brand">{classes.length}</strong> kelas
+        </span>
+      </div>
+
       {/* Class Cards */}
-      {classes.length === 0 ? (
+      {filteredClasses.length === 0 ? (
         <Card className="p-12 text-center">
           <BookOpen className="mx-auto mb-3 h-10 w-10 text-line" />
-          <p className="text-sm font-semibold text-ink">Belum ada kelas</p>
+          <p className="text-sm font-semibold text-ink">
+            {searchQuery ? "Kelas tidak ditemukan" : "Belum ada kelas"}
+          </p>
           <p className="mt-1 text-xs text-muted">
-            {role === "teacher"
-              ? "Buat kelas pertama Anda dengan tombol di atas."
-              : "Gabung kelas dengan kode dari guru Anda."}
+            {searchQuery
+              ? `Tidak ada kelas yang cocok dengan kata kunci "${searchQuery}".`
+              : role === "teacher"
+                ? "Buat kelas pertama Anda dengan tombol di atas."
+                : "Gabung kelas dengan kode dari guru Anda."}
           </p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {classes.map((cls, index) => {
-            const clsAssessments = assessments.filter(
-              (a) => a.classId === cls.id
-            );
-            const activeCount = clsAssessments.filter(
-              (a) => a.status === "active"
-            ).length;
+          {filteredClasses.map((cls, index) => {
             const gradient = bannerGradients[index % bannerGradients.length];
 
             return (
               <div
                 key={cls.id}
-                className="glass-card group flex flex-col justify-between overflow-hidden border border-line transition-all hover:border-brand"
+                className="glass-card group flex flex-col justify-between overflow-hidden border border-line transition-all duration-300 hover:border-brand hover:shadow-[0_12px_36px_rgba(10,22,128,0.12)]"
               >
-                {/* Banner */}
-                <Link href={`/classes/${cls.id}`}>
+                {/* Banner Top */}
+                <Link href={`/classes/${cls.id}`} className="block">
                   <div
                     className={`relative cursor-pointer bg-gradient-to-br p-5 text-white transition-opacity group-hover:opacity-95 ${gradient}`}
                   >
@@ -136,114 +210,113 @@ export function ClassesView({
 
                       <button
                         type="button"
-                        onClick={(e) =>
-                          handleCopy(e, cls.id, cls.classCode)
-                        }
+                        onClick={(e) => handleCopy(e, cls.id, cls.classCode)}
                         className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/15 px-2.5 py-1 font-mono text-[11px] font-bold text-white transition-colors hover:bg-white/25"
                         title="Salin Kode Kelas"
+                        aria-label="Salin kode kelas"
                       >
                         <span>{cls.classCode}</span>
                         {copiedId === cls.id ? (
-                          <Check className="h-3 w-3 text-butter-yellow" />
+                          <span className="flex items-center gap-1 text-butter-yellow">
+                            <Check className="h-3 w-3" />
+                            <span className="text-[10px] font-sans">Tersalin</span>
+                          </span>
                         ) : (
                           <Copy className="h-3 w-3 text-bleu-ciel" />
                         )}
                       </button>
                     </div>
 
-                    <h2 className="mt-3 text-lg font-extrabold tracking-tight text-white group-hover:underline">
-                      {cls.name}
-                    </h2>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-extrabold tracking-tight text-white group-hover:underline">
+                          {cls.name}
+                        </h2>
 
-                    <div className="mt-2 flex items-center gap-3 text-xs font-medium text-bleu-ciel">
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5" /> {cls.studentCount}{" "}
-                        Siswa
-                      </span>
-                      <span aria-hidden>·</span>
-                      <span className="flex items-center gap-1">
-                        <FileText className="h-3.5 w-3.5" />{" "}
-                        {clsAssessments.length} Asesmen
-                      </span>
-                      <span aria-hidden>·</span>
-                      <span className="font-semibold text-butter-yellow">
-                        {activeCount} Aktif
-                      </span>
+                        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-bleu-ciel">
+                          <GraduationCap className="h-3.5 w-3.5 shrink-0" />
+                          <span>
+                            Guru:{" "}
+                            <strong className="font-semibold text-white">
+                              {cls.teacherName || "Guru Pengampu"}
+                            </strong>
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-110">
+                        <img
+                          src={class3dIcons[index % class3dIcons.length]}
+                          alt="Icon 3D Web Component"
+                          className="h-12 w-12 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.28)]"
+                        />
+                      </div>
                     </div>
                   </div>
                 </Link>
 
-                {/* Assessment list inside card */}
-                <div className="space-y-2.5 p-5">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted">
-                    Daftar Asesmen ({clsAssessments.length})
-                  </span>
-
-                  {clsAssessments.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-line bg-white/60 p-4 text-center text-xs text-muted">
-                      Belum ada asesmen di kelas ini.
+                {/* Keterangan Kelas (Hanya Info & Keterangan Kelas, Tanpa Daftar Asesmen) */}
+                <div className="flex-1 space-y-4 p-5">
+                  {/* Grid Statistik & Keterangan */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="rounded-xl border border-line/70 bg-white/70 p-3">
+                      <div className="flex items-center gap-1.5 text-muted">
+                        <Users className="h-3.5 w-3.5 text-brand" />
+                        <span className="text-[11px] font-semibold">Siswa</span>
+                      </div>
+                      <p className="nums mt-1 text-base font-extrabold text-brand">
+                        {cls.studentCount}{" "}
+                        <span className="text-xs font-medium text-muted">terdaftar</span>
+                      </p>
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {clsAssessments.slice(0, 3).map((asm) => {
-                        const submitted = asm.submissions.filter(
-                          (s) => s.statusWork === "submitted"
-                        ).length;
-                        const final_ = asm.submissions.filter(
-                          (s) => s.statusGrading === "final"
-                        ).length;
 
-                        return (
-                          <Link
-                            key={asm.id}
-                            href={`/assessments/${asm.id}`}
-                            className="flex items-center justify-between gap-2 rounded-xl border border-line/80 bg-white/80 p-3 transition-all hover:border-brand hover:bg-paper"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-mono text-[10px] font-bold text-muted">
-                                  {asm.code}
-                                </span>
-                                <Badge
-                                  status={
-                                    ASSESSMENT_STATUS_LABEL[asm.status]
-                                  }
-                                />
-                              </div>
-                              <p className="mt-0.5 truncate text-xs font-bold text-brand">
-                                {asm.title}
-                              </p>
-                              <div className="mt-1 flex items-center gap-2 text-[10px] text-muted">
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />{" "}
-                                  {formatDueDate(asm.dueDate)}
-                                </span>
-                                {role === "teacher" && (
-                                  <>
-                                    <span>·</span>
-                                    <span className="nums font-semibold text-brand">
-                                      {final_}/{submitted} Dinilai
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            <ArrowRight className="h-4 w-4 shrink-0 text-brand" />
-                          </Link>
-                        );
-                      })}
-                      {clsAssessments.length > 3 && (
-                        <p className="text-center text-[11px] text-muted">
-                          +{clsAssessments.length - 3} asesmen lainnya
-                        </p>
-                      )}
+                    <div className="rounded-xl border border-line/70 bg-white/70 p-3">
+                      <div className="flex items-center gap-1.5 text-muted">
+                        <BookOpen className="h-3.5 w-3.5 text-brand" />
+                        <span className="text-[11px] font-semibold">Asesmen</span>
+                      </div>
+                      <p className="nums mt-1 text-base font-extrabold text-brand">
+                        {cls.assessmentCount}{" "}
+                        <span className="text-xs font-medium text-muted">tugas esai</span>
+                      </p>
                     </div>
-                  )}
+
+                    <div className="rounded-xl border border-line/70 bg-white/70 p-3">
+                      <div className="flex items-center gap-1.5 text-muted">
+                        <Calendar className="h-3.5 w-3.5 text-brand" />
+                        <span className="text-[11px] font-semibold">Semester</span>
+                      </div>
+                      <p className="mt-1 truncate text-xs font-bold text-ink">
+                        {cls.academicYear}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-line/70 bg-white/70 p-3">
+                      <div className="flex items-center gap-1.5 text-muted">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        <span className="text-[11px] font-semibold">Status</span>
+                      </div>
+                      <p className="mt-1 truncate text-xs font-bold text-emerald-700">
+                        Kelas Aktif
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Ringkasan Keterangan Ruang Kelas */}
+                  <div className="rounded-xl border border-line/60 bg-paper/70 p-3 text-xs leading-relaxed text-muted">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-brand">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      <span>Keterangan Kelas</span>
+                    </div>
+                    <p className="mt-1 text-[11px]">
+                      Ruang pembelajaran esai dan asesmen analitik. Daftar tugas esai, rubrik kriteria, pengerjaan LJK, serta rekapitulasi nilai dapat diakses langsung di dalam ruang kelas.
+                    </p>
+                  </div>
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between gap-2 border-t border-line/70 bg-paper/80 px-5 py-3.5">
-                  <Link href={`/classes/${cls.id}`} className="w-full">
+                {/* Footer Action */}
+                <div className="border-t border-line/70 bg-paper/80 p-4">
+                  <Link href={`/classes/${cls.id}`} className="block w-full">
                     <Button variant="primary" size="sm" className="w-full">
                       <FolderOpen className="h-3.5 w-3.5 text-butter-yellow" />
                       <span>Buka Ruang Kelas</span>
@@ -257,34 +330,68 @@ export function ClassesView({
         </div>
       )}
 
-      {/* Create Class Dialog - placeholder */}
+      {/* Create Class Dialog */}
       <Dialog
         open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={() => {
+          if (!isSubmitting) setCreateOpen(false);
+        }}
         title="Buat Ruang Kelas Baru"
-        description="Form pembuatan kelas baru — fitur ini memerlukan API route."
-      >
-        <div className="space-y-4 py-4">
-          <Field label="Nama Kelas" required>
-            <Input placeholder="Contoh: Biologi XI MIPA 2" disabled />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Mata Pelajaran" required>
-              <Input value="Biologi" disabled />
-            </Field>
-            <Field label="Tingkat Kelas">
-              <Select disabled>
-                <option>Kelas X</option>
-                <option>Kelas XI</option>
-                <option>Kelas XII</option>
-              </Select>
-            </Field>
+        description="Masukkan nama kelas baru untuk mulai mengelola siswa dan asesmen esai."
+        footer={
+          <div className="flex w-full items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isSubmitting}
+              onClick={() => setCreateOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              size="sm"
+              disabled={isSubmitting || !newClassName.trim()}
+              onClick={handleCreateClass}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="h-3.5 w-3.5 text-butter-yellow" />
+                  <span>Simpan Kelas</span>
+                </>
+              )}
+            </Button>
           </div>
-          <p className="flex items-center gap-1.5 text-[11px] text-muted">
-            <Info className="h-3.5 w-3.5 shrink-0 text-brand" />
-            <span>API route untuk membuat kelas akan ditambahkan di iterasi berikutnya.</span>
+        }
+      >
+        <form onSubmit={handleCreateClass} className="space-y-4 py-2">
+          {createError && (
+            <p
+              role="alert"
+              className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900"
+            >
+              {createError}
+            </p>
+          )}
+
+          <Field label="Nama Kelas" required>
+            <Input
+              value={newClassName}
+              onChange={(e) => setNewClassName(e.target.value)}
+              placeholder="Contoh: XII D — Biologi Lingkungan"
+              required
+              autoFocus
+            />
+          </Field>
+
+          <p className="text-[11px] text-muted">
+            Kode kelas (join code) 6 digit akan di-generate otomatis secara acak oleh sistem.
           </p>
-        </div>
+        </form>
       </Dialog>
     </div>
   );

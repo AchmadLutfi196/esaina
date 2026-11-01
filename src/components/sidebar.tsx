@@ -88,16 +88,25 @@ export function Sidebar({
           href="/dashboard"
           className="mb-8 flex flex-col items-center gap-1.5 lg:items-start"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-forest-dark shadow-[0_6px_20px_rgba(10,22,128,0.28)] lg:h-10 lg:w-10">
-            <span className="font-heading text-lg font-extrabold text-white">E</span>
+          {/* Compact mark on collapsed sidebar */}
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-line/60 bg-white p-2 shadow-[0_4px_16px_rgba(10,22,128,0.08)] lg:hidden">
+            <img
+              src="/brand/esaina-mark.png"
+              alt="ESAINA"
+              className="h-8 w-8 object-contain"
+            />
           </div>
-          <div className="hidden lg:block">
-            <p className="font-heading text-sm font-extrabold tracking-[0.14em] text-brand">
-              ESAINA
-            </p>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">
-              {roleLabel}
-            </p>
+
+          {/* Full logo on wide sidebar */}
+          <div className="hidden lg:flex lg:flex-col lg:items-start lg:gap-1">
+            <img
+              src="/brand/esaina-logo.png"
+              alt="ESAINA"
+              className="h-8 w-auto object-contain"
+            />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              Ruang {roleLabel}
+            </span>
           </div>
         </Link>
 

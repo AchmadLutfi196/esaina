@@ -72,18 +72,19 @@ export function LoginForm() {
         />
 
         <div className="relative z-10 space-y-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10 shadow-lg backdrop-blur-md">
-            <span className="font-heading text-xl font-extrabold text-white">E</span>
+          <div className="inline-flex items-center rounded-2xl border border-white/20 bg-white/95 p-2 shadow-lg backdrop-blur-md">
+            <img
+              src="/brand/esaina-logo.png"
+              alt="ESAINA"
+              className="h-9 w-auto object-contain"
+            />
           </div>
 
           <div>
             <span className="inline-block rounded-full border border-bleu-ciel/40 bg-white/10 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-bleu-ciel">
               INCEPTION 2026 • Kopsudomar
             </span>
-            <h1 className="mt-2 font-heading text-2xl font-extrabold leading-snug tracking-tight sm:text-3xl">
-              ESAINA
-            </h1>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-bleu-ciel">
+            <p className="mt-2 text-xs font-semibold uppercase tracking-widest text-bleu-ciel">
               Explainable Essay Assessment Platform
             </p>
           </div>

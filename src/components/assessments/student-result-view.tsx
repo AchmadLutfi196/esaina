@@ -62,9 +62,11 @@ export function StudentResultView({
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Kembali</span>
             </Link>
-            <span className="font-heading text-lg font-extrabold tracking-wider text-brand">
-              ESAINA
-            </span>
+            <img
+              src="/brand/esaina-logo.png"
+              alt="ESAINA"
+              className="h-6 w-auto object-contain"
+            />
             <span className="text-muted" aria-hidden>
               ·
             </span>

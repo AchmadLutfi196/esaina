@@ -142,6 +142,7 @@ export interface ClassItem {
   studentCount: number;
   assessmentCount: number;
   subject: string;
+  teacherName?: string;
 }
 
 /** Human-facing labels (Indonesian) for database enums. */

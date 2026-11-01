@@ -25,6 +25,7 @@ export async function getClassesForUser(userId: string, role: string) {
   const classes = await prisma.class.findMany({
     where,
     include: {
+      teacher: { select: { id: true, name: true, email: true } },
       _count: { select: { memberships: true, assessments: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -39,6 +40,7 @@ export async function getClassesForUser(userId: string, role: string) {
     classCode: c.joinCode,
     studentCount: c._count.memberships,
     assessmentCount: c._count.assessments,
+    teacherName: c.teacher?.name ?? "Guru Pengampu",
   }));
 }
 

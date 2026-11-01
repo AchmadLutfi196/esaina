@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createLlmAdapter } from "@/lib/ai/adapter";
 import type { AiEvidenceQuote, AiExplanation } from "@/types";
 
 const ID_STOPWORDS = new Set([
@@ -132,32 +133,113 @@ export async function POST(
 
     const overallAssessment = `Analisis IndoBERT mendeteksi kesesuaian konsep yang baik. Siswa menunjukkan pemahaman yang cukup kuat pada materi terkait. Rekomendasi skor akhir ${finalAiScore}/${question.maxScore} poin.`;
 
-    const aiExplanation: AiExplanation = {
+    let aiExplanation: AiExplanation = {
       overallAssessment,
       suggestedScores,
       keyEvidenceQuotes,
       improvementTips,
     };
 
+    let providerName = "indobert-heuristic";
+    let modelName = "indobert-base-uncased";
+
+    // If LLM API credentials exist, use live LLM completion
+    if (process.env.LLM_API_KEY && process.env.LLM_MODEL) {
+      try {
+        const adapter = createLlmAdapter();
+        providerName = adapter.provider;
+        modelName = adapter.model;
+
+        const systemPrompt = `Anda adalah asisten penilai esai akademik cerdas pada platform ESAINA.
+Tugas Anda adalah menilai jawaban esai siswa secara objektif berdasarkan butir soal, kunci acuan guru, dan kriteria rubrik.
+Aturan:
+1. Skor per kriteria harus berupa integer di antara skor minimal dan maksimal kriteria tersebut.
+2. 'keyEvidenceQuotes' harus berupa kutipan teks PERSIS (substring) yang ada di dalam jawaban siswa.
+3. Berikan saran pengembangan yang spesifik dan ramah dalam Bahasa Indonesia.
+Keluarkan output JSON dengan format persis:
+{
+  "overallAssessment": string,
+  "suggestedScores": { [criterionId: string]: number },
+  "keyEvidenceQuotes": [
+    { "text": string, "criterionId": string, "sentiment": "strength" | "improvement", "note": string }
+  ],
+  "improvementTips": string[]
+}`;
+
+        const userPrompt = JSON.stringify({
+          pertanyaan: question.text,
+          kunciAcuan: question.referenceAnswer,
+          kriteriaRubrik: question.criteria.map((c) => ({
+            id: c.id,
+            kode: c.code,
+            deskripsi: c.description,
+            minScore: c.minScore,
+            maxScore: c.maxScore,
+          })),
+          jawabanSiswa: studentText,
+        });
+
+        const raw = await adapter.complete({ system: systemPrompt, user: userPrompt });
+        const parsed = JSON.parse(raw);
+
+        const validatedScores: Record<string, number> = {};
+        for (const crit of question.criteria) {
+          const rawSc = Number(parsed.suggestedScores?.[crit.id]);
+          if (Number.isFinite(rawSc)) {
+            validatedScores[crit.id] = Math.max(crit.minScore, Math.min(crit.maxScore, Math.round(rawSc)));
+          } else {
+            validatedScores[crit.id] = suggestedScores[crit.id] ?? crit.maxScore;
+          }
+        }
+
+        const validQuotes: AiEvidenceQuote[] = (Array.isArray(parsed.keyEvidenceQuotes) ? parsed.keyEvidenceQuotes : [])
+          .filter((q: any) => typeof q?.text === "string" && studentText.includes(q.text))
+          .map((q: any) => ({
+            text: q.text.slice(0, 200),
+            criterionId: String(q.criterionId || primaryCriterionId),
+            sentiment: q.sentiment === "improvement" ? "improvement" : "strength",
+            note: String(q.note || "Kutipan relevan dengan kriteria rubrik."),
+          }))
+          .slice(0, 3);
+
+        const validTips: string[] = (Array.isArray(parsed.improvementTips) ? parsed.improvementTips : [])
+          .filter((t: any) => typeof t === "string" && t.trim().length > 0)
+          .slice(0, 3);
+
+        aiExplanation = {
+          overallAssessment: parsed.overallAssessment || overallAssessment,
+          suggestedScores: validatedScores,
+          keyEvidenceQuotes: validQuotes.length > 0 ? validQuotes : keyEvidenceQuotes,
+          improvementTips: validTips.length > 0 ? validTips : improvementTips,
+        };
+      } catch (llmErr) {
+        console.warn("Live LLM failed, using heuristic fallback:", llmErr);
+      }
+    }
+
     // 4. Save into AIResult
     await prisma.aIResult.create({
       data: {
         submissionId,
         requestedById: session.user.id,
-        provider: "indobert",
-        model: "indobert-base-uncased",
+        provider: providerName,
+        model: modelName,
         promptVersion: "v1",
-        cacheKey: `${submissionId}_q${questionId}`,
+        cacheKey: `${submissionId}_q${questionId}_${Date.now()}`,
         sourceVersion: 1,
         payload: aiExplanation as any,
         validationOk: true,
       },
     });
 
+    const calculatedTotal = Object.values(aiExplanation.suggestedScores).reduce((a, b) => a + b, 0);
+
     return NextResponse.json({
       success: true,
-      indobertScore: finalAiScore,
+      indobertScore: Math.min(question.maxScore, calculatedTotal),
       aiSuggestion: aiExplanation,
+      provider: providerName,
+      model: modelName,
     });
   } catch (err: any) {
     console.error("AI recommendation error:", err);

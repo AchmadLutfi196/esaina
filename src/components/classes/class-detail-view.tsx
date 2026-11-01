@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  ArrowRight,
+  Award,
+  BarChart2,
   BookOpen,
   Calendar,
   Check,
@@ -11,23 +14,30 @@ import {
   Copy,
   FileText,
   Plus,
+  Sliders,
   Sparkles,
   Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ClassGradebook, type GradebookStudent } from "@/components/classes/class-gradebook";
+import { RubricModal } from "@/components/classes/rubric-modal";
+import { ScoreInputModal } from "@/components/classes/score-input-modal";
+import { ScoreDistributionChart } from "@/components/classes/score-distribution-chart";
+import { scoreCellOf } from "@/lib/class-analytics";
 import { formatDueDate, cn } from "@/lib/utils";
 import {
   ASSESSMENT_STATUS_LABEL,
-  GRADING_STATUS_LABEL,
   type Assessment,
   type ClassItem,
   type Role,
+  type StudentSubmission,
 } from "@/types";
 
 interface ClassDetailInfo extends ClassItem {
   creatorName: string;
+  students?: GradebookStudent[];
 }
 
 export function ClassDetailView({
@@ -46,6 +56,14 @@ export function ClassDetailView({
   );
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("all");
   const [copiedCode, setCopiedCode] = useState(false);
+  const [rubricAssessment, setRubricAssessment] = useState<Assessment | null>(null);
+  const [scoreTarget, setScoreTarget] = useState<{
+    assessment: Assessment;
+    submission: StudentSubmission;
+  } | null>(null);
+
+  const students = classItem.students ?? [];
+  const isTeacher = role === "teacher";
 
   const filteredAssessments = assessments.filter(
     (a) => statusFilter === "all" || a.status === statusFilter
@@ -56,6 +74,11 @@ export function ClassDetailView({
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
   };
+
+  function openGrading(assessment: Assessment, submission: StudentSubmission) {
+    setRubricAssessment(null);
+    setScoreTarget({ assessment, submission });
+  }
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -90,28 +113,37 @@ export function ClassDetailView({
       {/* Banner */}
       <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-brand to-[#14259E] p-6 text-white shadow-lg sm:p-7">
         <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-butter-yellow">
-              <span>{classItem.subject}</span>
-              <span aria-hidden>·</span>
-              <span>{classItem.grade}</span>
-              <span aria-hidden>·</span>
-              <span>{classItem.academicYear}</span>
+          <div className="flex items-start gap-4">
+            <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 p-2 backdrop-blur-md shadow-sm sm:flex">
+              <img
+                src="/icons/3d/web-design.png"
+                alt="3D Web Component"
+                className="h-12 w-12 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.3)]"
+              />
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight sm:text-4xl">
-              {classItem.name}
-            </h1>
-            <p className="flex items-center gap-3 pt-1 text-xs text-bleu-ciel sm:text-sm">
-              <span className="flex items-center gap-1.5">
-                <Users className="h-4 w-4" /> {classItem.studentCount} Siswa
-              </span>
-              <span aria-hidden>·</span>
-              <span className="flex items-center gap-1.5">
-                <BookOpen className="h-4 w-4" /> {assessments.length} Asesmen
-              </span>
-              <span aria-hidden>·</span>
-              <span>Guru: {classItem.creatorName}</span>
-            </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-butter-yellow">
+                <span>{classItem.subject}</span>
+                <span aria-hidden>·</span>
+                <span>{classItem.grade}</span>
+                <span aria-hidden>·</span>
+                <span>{classItem.academicYear}</span>
+              </div>
+              <h1 className="text-2xl font-extrabold tracking-tight sm:text-4xl">
+                {classItem.name}
+              </h1>
+              <p className="flex flex-wrap items-center gap-3 pt-1 text-xs text-bleu-ciel sm:text-sm">
+                <span className="flex items-center gap-1.5">
+                  <Users className="h-4 w-4" /> {classItem.studentCount} Siswa
+                </span>
+                <span aria-hidden>·</span>
+                <span className="flex items-center gap-1.5">
+                  <BookOpen className="h-4 w-4" /> {assessments.length} Asesmen
+                </span>
+                <span aria-hidden>·</span>
+                <span>Guru: {classItem.creatorName}</span>
+              </p>
+            </div>
           </div>
 
           {/* Class Code */}
@@ -128,6 +160,7 @@ export function ClassDetailView({
               onClick={handleCopyCode}
               className="cursor-pointer rounded-lg bg-white/20 p-2 text-white transition-colors hover:bg-white/30"
               title="Salin Kode Kelas"
+              aria-label="Salin kode kelas"
             >
               {copiedCode ? (
                 <Check className="h-4 w-4 text-butter-yellow" />
@@ -141,8 +174,10 @@ export function ClassDetailView({
 
       {/* Tabs + Filters */}
       <div className="flex flex-col justify-between gap-3 border-b border-line/80 pb-3 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Navigasi kelas">
           <button
+            role="tab"
+            aria-selected={activeTab === "assignments"}
             onClick={() => setActiveTab("assignments")}
             className={cn(
               "flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all",
@@ -154,6 +189,23 @@ export function ClassDetailView({
             <FileText className="h-4 w-4" />
             <span>Tugas & Asesmen ({assessments.length})</span>
           </button>
+
+          {isTeacher && (
+            <button
+              role="tab"
+              aria-selected={activeTab === "analytics"}
+              onClick={() => setActiveTab("analytics")}
+              className={cn(
+                "flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all",
+                activeTab === "analytics"
+                  ? "bg-brand text-white shadow-xs"
+                  : "border border-line bg-white/75 text-muted hover:text-brand"
+              )}
+            >
+              <BarChart2 className="h-4 w-4" />
+              <span>Rekap Nilai &amp; Sebaran Skor</span>
+            </button>
+          )}
         </div>
 
         {activeTab === "assignments" && (
@@ -162,13 +214,14 @@ export function ClassDetailView({
               {(
                 [
                   ["all", "Semua"],
-                  ["active", "Aktif"],
-                  ["completed", "Selesai"],
+                  ["active", "Dibuka"],
+                  ["completed", "Ditutup"],
                 ] as const
               ).map(([value, label]) => (
                 <button
                   key={value}
                   onClick={() => setStatusFilter(value)}
+                  aria-pressed={statusFilter === value}
                   className={cn(
                     "cursor-pointer rounded-lg px-2.5 py-1 text-xs font-bold transition-all",
                     statusFilter === value
@@ -181,7 +234,7 @@ export function ClassDetailView({
               ))}
             </div>
 
-            {role === "teacher" && (
+            {isTeacher && (
               <Link href="/assessments/new">
                 <Button size="sm">
                   <Plus className="h-4 w-4" />
@@ -193,7 +246,7 @@ export function ClassDetailView({
         )}
       </div>
 
-      {/* Assessment list */}
+      {/* TAB 1: assignments */}
       {activeTab === "assignments" && (
         <div className="space-y-3.5">
           {filteredAssessments.length === 0 ? (
@@ -265,7 +318,7 @@ export function ClassDetailView({
                     </div>
                   </div>
 
-                  {role === "teacher" ? (
+                  {isTeacher ? (
                     <div className="flex shrink-0 flex-col items-stretch gap-4 border-t border-line/60 pt-3 sm:flex-row sm:items-center lg:border-t-0 lg:pt-0">
                       <div className="flex items-center gap-4 rounded-xl border border-line/70 bg-white/70 px-3 py-1.5">
                         <div className="border-r border-line pr-4">
@@ -287,6 +340,14 @@ export function ClassDetailView({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setRubricAssessment(asm)}
+                        >
+                          <Sliders className="h-3.5 w-3.5 text-brand" />
+                          <span>Rubrik &amp; Skor</span>
+                        </Button>
                         <Link href={`/assessments/${asm.id}`}>
                           <Button variant="outline" size="sm">
                             Detail
@@ -301,24 +362,7 @@ export function ClassDetailView({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex shrink-0 items-center gap-3 border-t border-line/60 pt-3 lg:border-t-0 lg:pt-0">
-                      <Link
-                        href={
-                          asm.status === "active"
-                            ? `/assessments/${asm.id}/take`
-                            : `/assessments/${asm.id}/result`
-                        }
-                      >
-                        <Button size="sm">
-                          <BookOpen className="h-4 w-4" />
-                          <span>
-                            {asm.status === "active"
-                              ? "Kerjakan"
-                              : "Lihat Hasil"}
-                          </span>
-                        </Button>
-                      </Link>
-                    </div>
+                    <StudentAssessmentAction assessment={asm} />
                   )}
                 </div>
               );
@@ -326,6 +370,64 @@ export function ClassDetailView({
           )}
         </div>
       )}
+
+      {/* TAB 2: analytics */}
+      {activeTab === "analytics" && isTeacher && (
+        <div className="space-y-6">
+          <ScoreDistributionChart assessments={assessments} />
+          <ClassGradebook
+            students={students}
+            assessments={assessments}
+            onOpenStudent={openGrading}
+          />
+        </div>
+      )}
+
+      <RubricModal
+        open={Boolean(rubricAssessment)}
+        onClose={() => setRubricAssessment(null)}
+        assessment={rubricAssessment}
+        onGradeStudent={(submission) => {
+          if (rubricAssessment) openGrading(rubricAssessment, submission);
+        }}
+      />
+
+      {scoreTarget && (
+        <ScoreInputModal
+          open={Boolean(scoreTarget)}
+          onClose={() => setScoreTarget(null)}
+          assessment={scoreTarget.assessment}
+          submission={scoreTarget.submission}
+        />
+      )}
+    </div>
+  );
+}
+
+function StudentAssessmentAction({ assessment }: { assessment: Assessment }) {
+  const cell = scoreCellOf(assessment.submissions[0], assessment);
+  const isActive = assessment.status === "active";
+
+  return (
+    <div className="flex shrink-0 items-center gap-3 border-t border-line/60 pt-3 lg:border-t-0 lg:pt-0">
+      {cell.percent !== null && (
+        <div className="rounded-xl border border-accent bg-butter-yellow/60 px-3 py-1.5 text-right">
+          <span className="block text-[10px] font-bold text-brand">Nilai Akhir</span>
+          <span className="nums text-lg font-extrabold text-brand">{cell.percent}/100</span>
+        </div>
+      )}
+
+      <Link
+        href={
+          isActive ? `/assessments/${assessment.id}/take` : `/assessments/${assessment.id}/result`
+        }
+      >
+        <Button size="sm">
+          {isActive ? <BookOpen className="h-4 w-4" /> : <Award className="h-4 w-4" />}
+          <span>{isActive ? "Kerjakan" : "Lihat Umpan Balik"}</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Button>
+      </Link>
     </div>
   );
 }

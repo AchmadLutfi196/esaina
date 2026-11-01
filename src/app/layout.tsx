@@ -27,6 +27,10 @@ export const metadata: Metadata = {
     "Platform asesmen dan penilaian esai berbasis Explainable AI untuk sekolah: rubrik transparan, rekomendasi IndoBERT, dan jejak audit setiap perubahan nilai.",
   applicationName: "ESAINA",
   authors: [{ name: "ESAINA" }],
+  icons: {
+    icon: "/brand/esaina-mark.png",
+    apple: "/brand/esaina-mark.png",
+  },
 };
 
 export const viewport: Viewport = {

@@ -57,7 +57,10 @@ export function createLlmAdapter(): LlmAdapter {
         }),
         signal: AbortSignal.timeout(30_000),
       });
-      if (!response.ok) throw new Error(`LLM HTTP ${response.status}`);
+      if (!response.ok) {
+        const errText = await response.text().catch(() => "");
+        throw new Error(`LLM HTTP ${response.status}: ${errText.slice(0, 200)}`);
+      }
       const body = (await response.json()) as { choices?: { message?: { content?: string } }[] };
       const content = body.choices?.[0]?.message?.content;
       if (!content) throw new Error("Respons LLM kosong.");
