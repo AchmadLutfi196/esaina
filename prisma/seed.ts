@@ -25,9 +25,9 @@ async function main() {
   });
 
   // Guru tambahan untuk login demo
-  await prisma.user.upsert({
+  const teacher1 = await prisma.user.upsert({
     where: { email: "teacher1@example.com" },
-    update: { passwordHash: hash },
+    update: { passwordHash: hash, name: "Dra. Sri Wahyuni, M.Pd.", role: "TEACHER" },
     create: {
       email: "teacher1@example.com",
       name: "Dra. Sri Wahyuni, M.Pd.",
@@ -38,9 +38,9 @@ async function main() {
     },
   });
 
-  await prisma.user.upsert({
+  const teacher2 = await prisma.user.upsert({
     where: { email: "teacher2@example.com" },
-    update: { passwordHash: hash },
+    update: { passwordHash: hash, name: "Budi Santoso, S.Pd.", role: "TEACHER" },
     create: {
       email: "teacher2@example.com",
       name: "Budi Santoso, S.Pd.",
@@ -48,6 +48,47 @@ async function main() {
       role: "TEACHER",
       anonCode: "T-BUDI",
       identifier: "198203152008011002",
+    },
+  });
+
+  // Admin demo
+  await prisma.user.upsert({
+    where: { email: "admin@example.com" },
+    update: { passwordHash: hash, name: "Administrator Sekolah", role: "ADMIN" },
+    create: {
+      email: "admin@example.com",
+      name: "Administrator Sekolah",
+      passwordHash: hash,
+      role: "ADMIN",
+      anonCode: "ADM-01",
+      identifier: "197001011995031001",
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "admin@demo.sch.id" },
+    update: { passwordHash: hash, name: "Administrator Sekolah", role: "ADMIN" },
+    create: {
+      email: "admin@demo.sch.id",
+      name: "Administrator Sekolah",
+      passwordHash: hash,
+      role: "ADMIN",
+      anonCode: "ADM-DEMO",
+      identifier: "197001011995031002",
+    },
+  });
+
+  // Siswa demo (termasuk student1@example.com untuk tombol demo di login UI)
+  const student1Ui = await prisma.user.upsert({
+    where: { email: "student1@example.com" },
+    update: { passwordHash: hash, name: "Aisyah Putri Rahmadani", role: "STUDENT" },
+    create: {
+      email: "student1@example.com",
+      name: "Aisyah Putri Rahmadani",
+      passwordHash: hash,
+      role: "STUDENT",
+      anonCode: "S000",
+      identifier: "20261000",
     },
   });
 
@@ -68,15 +109,28 @@ async function main() {
       });
     })
   );
+  const allStudents = [student1Ui, ...students];
 
   const kelas = await prisma.class.upsert({
     where: { joinCode: "XIIA01" },
-    update: {},
-    create: { name: "XII A — Biologi & Sains", joinCode: "XIIA01", teacherId: guru.id },
+    update: { teacherId: teacher1.id },
+    create: { name: "XII A — Biologi & Sains", joinCode: "XIIA01", teacherId: teacher1.id },
+  });
+
+  await prisma.class.upsert({
+    where: { joinCode: "XIIB01" },
+    update: { teacherId: guru.id },
+    create: { name: "XII B — Biologi & Kimia Terapan", joinCode: "XIIB01", teacherId: guru.id },
+  });
+
+  await prisma.class.upsert({
+    where: { joinCode: "XIMIPA" },
+    update: { teacherId: teacher2.id },
+    create: { name: "XI MIPA — Fisika Terapan", joinCode: "XIMIPA", teacherId: teacher2.id },
   });
 
   await Promise.all(
-    students.map((s) =>
+    allStudents.map((s) =>
       prisma.classMembership.upsert({
         where: { classId_studentId: { classId: kelas.id, studentId: s.id } },
         update: {},
