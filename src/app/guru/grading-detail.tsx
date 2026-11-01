@@ -130,7 +130,10 @@ export function GradingDetail({ submissionId }: { submissionId: string }) {
         aiResultId,
         version: query.data?.version,
       }),
-    onSuccess: () => void query.refetch(),
+    onSuccess: () => {
+      setItems([]);
+      void query.refetch();
+    },
   });
 
   if (query.isPending) {
@@ -176,13 +179,9 @@ export function GradingDetail({ submissionId }: { submissionId: string }) {
   const published = Boolean(revision?.publications.length);
   const hasUnpublishedChanges = final && !published;
   const aiBusy = ai.isPending || applyAi.isPending;
-  const mutationError = [
-    save.error,
-    finalize.error,
-    revise.error,
-    ai.error,
-    applyAi.error,
-  ].find(Boolean);
+  const aiError = applyAi.error ?? ai.error;
+  const mutationError =
+    [save.error, finalize.error, revise.error].find(Boolean) ?? aiError;
 
   const revisionBadge = published ? (
     <Badge variant="success">Terbit</Badge>
@@ -397,10 +396,21 @@ export function GradingDetail({ submissionId }: { submissionId: string }) {
         </p>
       ) : null}
 
+      {applyAi.isSuccess ? (
+        <p role="status" className="text-sm text-[var(--muted-foreground)]">
+          Saran AI diterapkan. Periksa dan sesuaikan skor.
+        </p>
+      ) : null}
+
       {mutationError ? (
         <Alert variant="destructive">
           <AlertDescription>
-            {errorMessage(mutationError, "Gagal menyimpan nilai.")}
+            {errorMessage(
+              mutationError,
+              mutationError === aiError
+                ? "Saran AI gagal. Nilai manual tetap bisa dipakai."
+                : "Gagal menyimpan nilai.",
+            )}
           </AlertDescription>
         </Alert>
       ) : null}

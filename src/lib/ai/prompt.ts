@@ -14,9 +14,11 @@ export function buildPrompt(question: LlmQuestion): { system: string; user: stri
   };
 }
 
-export function cacheKey(input: { submissionId: string; version: number; questions: LlmQuestion[] }): string {
+export function cacheKey(input: { submissionId: string; version: number; questions: LlmQuestion[]; provider: string; model: string }): string {
   return createHash("sha256").update(JSON.stringify({ promptVersion: PROMPT_VERSION, ...input })).digest("hex");
 }
+
+const normalize = (s: string) => s.trim().replace(/\s+/g, " ");
 
 export function validateAiPayload(raw: unknown, questions: LlmQuestion[]): AiGradePayload {
   if (!raw || typeof raw !== "object" || !Array.isArray((raw as { items?: unknown }).items)) throw new Error("Format AI tidak valid.");
@@ -32,8 +34,10 @@ export function validateAiPayload(raw: unknown, questions: LlmQuestion[]): AiGra
     if (!criterion || seen.has(key)) throw new Error("ID kriteria AI tidak valid atau duplikat.");
     const score = Number(x.score);
     if (!Number.isInteger(score) || score < criterion.minScore || score > criterion.maxScore) throw new Error(`Skor AI di luar rentang untuk ${criterionId}.`);
+    const evidence = String(x.evidence ?? "");
+    if (evidence && !normalize(questions.find((q) => q.id === questionId)?.answer ?? "").includes(normalize(evidence))) throw new Error(`Field evidence bukan kutipan persis dari jawaban untuk ${criterionId}.`);
     seen.add(key);
-    return { questionId, criterionId, score, evidence: String(x.evidence ?? ""), rationale: String(x.rationale ?? ""), feedback: String(x.feedback ?? "") };
+    return { questionId, criterionId, score, evidence, rationale: String(x.rationale ?? ""), feedback: String(x.feedback ?? "") };
   });
   if (seen.size !== expected.size) throw new Error("Kriteria AI tidak lengkap.");
   return { items };

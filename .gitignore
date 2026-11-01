@@ -62,3 +62,7 @@ AGENTS.md
 .playwright-mcp
 
 
+
+# playwright artifacts
+.playwright-mcp/
+/bg-*.png

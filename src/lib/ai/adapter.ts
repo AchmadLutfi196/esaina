@@ -43,25 +43,28 @@ export function createLlmAdapter(): LlmAdapter {
     provider: process.env.LLM_PROVIDER ?? "openai-compatible",
     model,
     async complete(input) {
-      const response = await fetch(`${baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model,
-          temperature: 0,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: input.system },
-            { role: "user", content: input.user },
-          ],
-        }),
-        signal: AbortSignal.timeout(30_000),
-      });
+      const send = (jsonMode: boolean) =>
+        fetch(`${baseUrl}/chat/completions`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model,
+            temperature: 0,
+            ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
+            messages: [
+              { role: "system", content: input.system },
+              { role: "user", content: input.user },
+            ],
+          }),
+          signal: AbortSignal.timeout(30_000),
+        });
+      let response = await send(true);
+      if (response.status === 400 || response.status === 422) response = await send(false);
       if (!response.ok) throw new Error(`LLM HTTP ${response.status}`);
       const body = (await response.json()) as { choices?: { message?: { content?: string } }[] };
       const content = body.choices?.[0]?.message?.content;
       if (!content) throw new Error("Respons LLM kosong.");
-      return content;
+      return content.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     },
   };
 }

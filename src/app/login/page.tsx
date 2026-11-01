@@ -25,7 +25,7 @@ export default async function LoginPage() {
   if (session?.user) redirect("/");
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-2">
+    <div className="grid min-h-screen lg:grid-cols-2">
       <section className="hidden flex-col justify-center gap-8 px-12 lg:flex">
         <div className="flex items-center gap-2">
           <GraduationCap className="size-6 text-primary" aria-hidden />
