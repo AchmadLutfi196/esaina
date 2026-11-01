@@ -1,32 +1,19 @@
-import * as React from "react"
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
-import { liquidProps, resolveVariant, type LiquidProps } from "@/lib/liquid-glass/material"
+import { cn } from "@/lib/utils";
 
-function Input({
-  className,
-  type,
-  variant,
-  material,
-  tint,
-  glass,
-  webgl,
-  style,
-  ...props
-}: React.ComponentProps<"input"> & LiquidProps & {
-  variant?: "liquid" | "default"
-}) {
-  const v = resolveVariant<"liquid" | "default">(variant, material)
-  const base = cn(
-    "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex w-full min-w-0 text-base transition-[color,box-shadow,scale] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-    "focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-    "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-  )
-  const own = v.variant === "liquid"
-    ? liquidProps({ role: "control", material: v.material, tint, glass, webgl }, { className: cn(base, "h-11 px-4", className), style })
-    : { className: cn(base, "h-9 rounded-md border px-3 py-1 dark:bg-input/30 border-input bg-transparent shadow-xs focus-visible:border-ring", className), style }
-
-  return <input type={type} data-slot="input" {...own} {...props} />
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "h-10 w-full min-w-0 rounded-[var(--neu-radius-control)] border border-transparent bg-[var(--neu-surface)] [background-image:var(--neu-fill-inset)] px-3 py-2 text-sm font-normal tracking-normal text-[var(--foreground)] shadow-[var(--neu-shadow-inset)] outline-hidden transition-[box-shadow,border-color] duration-[var(--neu-duration)] motion-reduce:transition-none file:mr-3 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[var(--muted-foreground)] focus-visible:border-[var(--ring)] focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none disabled:[background-image:none] disabled:border-[color:var(--input)] read-only:border-[color:var(--input)] read-only:shadow-none read-only:[background-image:none] read-only:bg-[var(--neu-surface-soft)] aria-invalid:border-[var(--destructive)] aria-invalid:focus-visible:outline-[color:var(--neu-error-text)]",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
-export { Input }
+export { Input };

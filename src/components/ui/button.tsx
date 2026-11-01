@@ -1,74 +1,63 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 
-import { cn } from "@/lib/utils"
-import { liquidProps, resolveVariant, type LiquidProps } from "@/lib/liquid-glass/material"
+import { cn } from "@/lib/utils";
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
-  {
-    variants: {
-      variant: {
-        liquid: "text-foreground",
-        default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 active:scale-[0.98] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]",
-        destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 active:scale-[0.98] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]",
-        outline:
-          "border-2 border-foreground/20 bg-transparent text-foreground shadow-xs hover:bg-foreground/10 hover:border-foreground/40 hover:text-foreground dark:border-white/40 dark:hover:bg-white/5 dark:hover:border-white/60 dark:text-white active:bg-foreground/15 active:border-foreground/50 dark:active:bg-white/10 active:scale-[0.98]",
-        secondary:
-          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 active:scale-[0.98]",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 active:bg-accent/80 dark:active:bg-accent/60",
-        link: "text-primary underline-offset-4 hover:underline active:opacity-80",
-      },
-      size: {
-        default: "h-11 px-5 has-[>svg]:px-4",
-        sm: "h-9 gap-1.5 px-4 has-[>svg]:px-3",
-        lg: "h-13 px-7 has-[>svg]:px-5",
-        icon: "size-11",
-      },
-    },
-    defaultVariants: {
-      variant: "liquid",
-      size: "default",
-    },
-  }
-)
+const buttonVariants = {
+  default:
+    "border-transparent bg-[var(--neu-surface)] [background-image:var(--neu-fill-raised)] active:[background-image:none] text-[var(--foreground)] shadow-[var(--neu-shadow-raised-sm)] hover:shadow-[var(--neu-shadow-hover)] active:shadow-[var(--neu-shadow-inset)]",
+  primary:
+    "border-transparent bg-[var(--neu-surface)] [background-image:var(--neu-fill-raised)] active:[background-image:var(--neu-fill-inset)] text-[var(--neu-accent-ink)] shadow-[var(--neu-shadow-raised-sm)] hover:shadow-[var(--neu-shadow-hover)] active:shadow-[var(--neu-shadow-inset)]",
+  solid:
+    "border-transparent bg-[var(--primary)] text-[var(--primary-foreground)] shadow-[var(--neu-shadow-primary)] hover:shadow-[var(--neu-shadow-primary-hover)] active:shadow-[var(--neu-shadow-primary-inset)] active:[background-image:none]",
+  soft:
+    "border-transparent bg-[var(--neu-surface-soft)] text-[var(--foreground)] shadow-[var(--neu-shadow-raised-sm)] hover:bg-[var(--neu-surface)] hover:shadow-[var(--neu-shadow-hover)] active:bg-[var(--neu-surface)] active:[background-image:var(--neu-fill-inset)] active:shadow-[var(--neu-shadow-inset)]",
+  ghost:
+    "border-transparent bg-transparent text-[var(--foreground)] shadow-none hover:bg-[var(--neu-surface-soft)] active:bg-[var(--neu-surface-low)] active:shadow-[var(--neu-shadow-inset)]",
+  destructive:
+    "border-transparent bg-[color:var(--destructive)]/8 text-[var(--neu-error-text)] shadow-none hover:shadow-[var(--neu-shadow-raised-sm)] active:shadow-[var(--neu-shadow-inset)]",
+} as const;
 
-type ButtonVariant = NonNullable<VariantProps<typeof buttonVariants>["variant"]>
+const buttonSizes = {
+  sm: "h-8 px-3 text-xs [--button-icon-size:0.875rem]",
+  default: "h-10 px-4 text-sm [--button-icon-size:1rem]",
+  lg: "h-12 px-6 text-base [--button-icon-size:1.25rem]",
+  icon: "size-10 p-0 [--button-icon-size:1.25rem]",
+} as const;
+
+type ButtonVariant = keyof typeof buttonVariants;
+type ButtonSize = keyof typeof buttonSizes;
+
+export interface ButtonProps extends React.ComponentProps<"button"> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  asChild?: boolean;
+}
 
 function Button({
   className,
-  variant,
-  size,
+  variant = "default",
+  size = "default",
+  type = "button",
   asChild = false,
-  material,
-  tint,
-  glass,
-  webgl,
-  style,
   ...props
-}: React.ComponentProps<"button"> &
-  Omit<VariantProps<typeof buttonVariants>, "variant"> &
-  LiquidProps & {
-    variant?: ButtonVariant | null
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot : "button"
-  const v = resolveVariant<ButtonVariant>(variant ?? undefined, material)
-  const lg = v.variant === "liquid" ? liquidProps({ role: "control", material: v.material, tint, glass, webgl }) : null
-
+}: ButtonProps) {
+  const Comp = asChild ? Slot : "button";
   return (
     <Comp
+      type={asChild ? undefined : type}
       data-slot="button"
-      {...lg}
-      className={cn(buttonVariants({ variant: v.variant, size }), lg?.className, className)}
-      style={{ ...lg?.style, ...style }}
+      data-variant={variant}
+      data-size={size}
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[var(--neu-radius-control)] border font-semibold leading-5 tracking-normal outline-hidden transition-[box-shadow,background-color,color] duration-[var(--neu-duration)] motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-3 focus-visible:outline-[color:var(--ring)] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none disabled:[background-image:none] disabled:border-[color:var(--muted-foreground)]/30 [&_svg]:pointer-events-none [&_svg]:block [&_svg:not([class*=size-])]:size-[var(--button-icon-size)] [&_svg]:shrink-0",
+        buttonVariants[variant],
+        buttonSizes[size],
+        className,
+      )}
       {...props}
     />
-  )
+  );
 }
 
-export { Button, buttonVariants }
+export { Button, buttonSizes, buttonVariants };

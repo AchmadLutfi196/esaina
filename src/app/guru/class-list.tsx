@@ -55,7 +55,7 @@ export function ClassList() {
             <span>
               {classesQuery.error instanceof Error ? classesQuery.error.message : "Gagal memuat kelas."}
             </span>
-            <Button size="sm" variant="outline" onClick={() => void classesQuery.refetch()}>
+            <Button size="sm" variant="soft" onClick={() => void classesQuery.refetch()}>
               Coba lagi
             </Button>
           </AlertDescription>
@@ -77,7 +77,7 @@ export function ClassList() {
               <Card className="gap-3 px-5">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-lg font-medium text-primary">{k.name}</h3>
-                  <Badge variant="secondary">Kode {k.joinCode}</Badge>
+                  <Badge variant="soft">Kode {k.joinCode}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {k.memberCount} anggota · {k.assessmentCount} asesmen
@@ -122,9 +122,7 @@ function CreateClassDialog({ onCreated }: { onCreated: () => void }) {
         if (!next) reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button variant="default">Buat kelas</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button variant="solid" />}>Buat kelas</DialogTrigger>
       <DialogContent>
         {code ? (
           <>
@@ -155,7 +153,7 @@ function CreateClassDialog({ onCreated }: { onCreated: () => void }) {
               <Input id="class-name" name="name" required disabled={create.isPending} placeholder="XII A" />
             </div>
             <DialogFooter>
-              <Button type="submit" variant="default" disabled={create.isPending}>
+              <Button type="submit" variant="solid" disabled={create.isPending}>
                 {create.isPending ? "Menyimpan…" : "Buat kelas"}
               </Button>
             </DialogFooter>

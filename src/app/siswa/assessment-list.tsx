@@ -30,7 +30,7 @@ export function AssessmentList() {
     <li key={a.id}>
       <Card className="flex flex-row items-center justify-between gap-4 px-5">
         <div><p className="font-medium text-primary">{a.title}</p><p className="text-sm text-muted-foreground">{a.class.name} · {a.questionCount} soal</p></div>
-        {a.submission?.status === "SUBMITTED" ? <Badge variant="secondary">Terkumpul</Badge> : <Button asChild size="sm" variant="default"><Link href={`/siswa/assessment/${a.id}`}>{a.submission ? "Lanjutkan" : "Mulai"}</Link></Button>}
+        {a.submission?.status === "SUBMITTED" ? <Badge variant="soft">Terkumpul</Badge> : <Button asChild size="sm" variant="solid"><Link href={`/siswa/assessment/${a.id}`}>{a.submission ? "Lanjutkan" : "Mulai"}</Link></Button>}
       </Card>
     </li>
   ))}</ul>;

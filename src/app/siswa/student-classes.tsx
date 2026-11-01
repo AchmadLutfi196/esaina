@@ -65,7 +65,7 @@ export function StudentClasses() {
               className="uppercase tracking-widest"
             />
           </div>
-          <Button type="submit" variant="default" disabled={join.isPending}>
+          <Button type="submit" variant="solid" disabled={join.isPending}>
             {join.isPending ? "Bergabung…" : "Gabung kelas"}
           </Button>
         </div>
@@ -84,7 +84,7 @@ export function StudentClasses() {
               <span>
                 {mineQuery.error instanceof Error ? mineQuery.error.message : "Gagal memuat kelas."}
               </span>
-              <Button size="sm" variant="outline" onClick={() => void mineQuery.refetch()}>
+              <Button size="sm" variant="soft" onClick={() => void mineQuery.refetch()}>
                 Coba lagi
               </Button>
             </AlertDescription>
@@ -99,7 +99,7 @@ export function StudentClasses() {
           <ul className="flex flex-wrap gap-2">
             {mineQuery.data.classes.map((k) => (
               <li key={k.id}>
-                <Badge variant="secondary">{k.name}</Badge>
+                <Badge variant="soft">{k.name}</Badge>
               </li>
             ))}
           </ul>
