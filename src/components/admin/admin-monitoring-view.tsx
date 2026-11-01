@@ -17,10 +17,18 @@ export function AdminMonitoringView({
 }: {
   assessments: Assessment[];
 }) {
-  const [selectedId, setSelectedId] = useState(assessments[0]?.id ?? "");
+  // Urutkan agar asesmen aktif yang memiliki submisi tampil lebih dulu.
+  const ordered = React.useMemo(() => {
+    const rank = (a: Assessment) =>
+      (a.status === "active" ? 2 : a.status === "completed" ? 1 : 0) +
+      (a.submissions.length > 0 ? 1 : 0);
+    return [...assessments].sort((a, b) => rank(b) - rank(a));
+  }, [assessments]);
+
+  const [selectedId, setSelectedId] = useState(ordered[0]?.id ?? "");
 
   const selected =
-    assessments.find((a) => a.id === selectedId) ?? assessments[0];
+    ordered.find((a) => a.id === selectedId) ?? ordered[0];
 
   const totalSubmitted = selected
     ? selected.submissions.filter((s) => s.statusWork === "submitted").length
@@ -36,11 +44,11 @@ export function AdminMonitoringView({
     <div className="animate-fade-up space-y-6">
       {/* Top Header */}
       <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/80 bg-white/85 p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] backdrop-blur-md sm:flex-row sm:items-center">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Link
               href="/dashboard"
-              className="flex items-center gap-1 text-xs font-semibold text-muted hover:text-brand"
+              className="flex shrink-0 items-center gap-1 text-xs font-semibold text-muted hover:text-brand"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>Kembali ke Dasbor</span>
@@ -48,30 +56,30 @@ export function AdminMonitoringView({
             <span className="text-muted" aria-hidden>
               ·
             </span>
-            <span className="text-xs font-semibold text-brand">
-              {selected?.className ?? "XI MIPA 1"} · {selected?.subject ?? "Biologi"} · Guru: Dra. Sri Wahyuni, M.Pd.
+            <span className="line-clamp-1 text-xs font-semibold text-brand">
+              {selected?.className ?? "Kelas"} · {selected?.subject ?? "Mata Pelajaran"} · Guru: {selected?.teacherName ?? "—"}
             </span>
           </div>
           <h1 className="font-heading text-2xl font-extrabold tracking-wide text-brand sm:text-3xl">
             DETAIL MONITORING ASESMEN & EVALUASI
           </h1>
-          <p className="text-xs text-muted sm:text-sm">
+          <p className="line-clamp-2 text-xs text-muted sm:text-sm">
             {selected?.title ?? "Ulangan Harian"} · Pemantauan progres penyelesaian penilaian guru dan verifikasi AI.
           </p>
         </div>
 
         {/* Assessment Selector dropdown if multiple */}
-        {assessments.length > 1 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted">Pilih Asesmen:</span>
+        {ordered.length > 1 && (
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="shrink-0 text-xs font-semibold text-muted">Pilih Asesmen:</span>
             <select
               value={selected?.id}
               onChange={(e) => setSelectedId(e.target.value)}
-              className="rounded-xl border border-line bg-white p-2 text-xs font-bold text-brand shadow-xs outline-none"
+              className="max-w-[15rem] rounded-xl border border-line bg-white p-2 text-xs font-bold text-brand shadow-xs outline-none"
             >
-              {assessments.map((a) => (
+              {ordered.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.title} ({a.className})
+                  {a.title}
                 </option>
               ))}
             </select>
@@ -90,7 +98,7 @@ export function AdminMonitoringView({
           </span>
           <div className="mt-2">
             <span className="font-heading text-3xl font-extrabold text-brand">
-              1 Guru
+              {selected?.teacherName?.split(",")[0] ?? "1 Guru"}
             </span>
           </div>
           <p className="mt-1 text-xs text-muted">Evaluator Utama</p>

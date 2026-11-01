@@ -106,7 +106,7 @@ export async function getClassById(classId: string, userId: string, role: string
 // ─────────────────────────────────────────────────────────────
 
 export const assessmentInclude = {
-  class: { select: { name: true } },
+  class: { select: { name: true, teacher: { select: { name: true } } } },
   questions: {
     orderBy: { order: "asc" as const },
     include: { criteria: { orderBy: { order: "asc" as const } } },
@@ -230,6 +230,7 @@ function toAssessment(a: NonNullable<DbAssessment>, viewer?: Viewer): Assessment
     id: a.id,
     classId: a.classId,
     className: a.class.name,
+    teacherName: a.class.teacher?.name ?? "Guru Pengampu",
     title: a.title,
     code: a.id.slice(0, 8).toUpperCase(),
     subject: a.class.name.includes("—") ? a.class.name.split("—")[1]?.trim() : a.class.name,

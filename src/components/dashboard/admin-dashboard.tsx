@@ -204,7 +204,7 @@ export function AdminDashboard({
                         </div>
                       </td>
                       <td className="py-3.5 px-4 text-muted">
-                        Dra. Sri Wahyuni, M.Pd.
+                        {a.teacherName ?? "—"}
                       </td>
                       <td className="py-3.5 px-4">
                         {a.status === "active" ? (

@@ -117,6 +117,7 @@ export interface Assessment {
   id: string;
   classId: string;
   className?: string;
+  teacherName?: string;
   title: string;
   code: string;
   subject: string;

@@ -32,12 +32,10 @@ export default async function TakeAssessmentPage({
   // tanpa jawaban acuan, rubrik internal, maupun data siswa lain.
   const examAssessment = {
     ...assessment,
-    questions: assessment.questions.map((q) => ({
-      ...q,
-      referenceAnswer: undefined,
-      expectedKeywords: [],
-      rubric: [],
-    })),
+    questions: assessment.questions.map((q) => {
+      const { referenceAnswer: _ref, expectedKeywords: _kw, rubric: _rubric, ...safe } = q;
+      return { ...safe, expectedKeywords: [], rubric: [] };
+    }),
     submissions: mySubmission ? [mySubmission] : [],
   };
 
