@@ -1,10 +1,14 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
+import { Building2, ClipboardList, FileText } from "lucide-react";
 import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
 import { ClassList } from "./class-list";
 import { AssessmentBuilder } from "./assessment-builder";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
 
 export const metadata = { title: "Ruang kerja guru — ESAINA" };
 
@@ -21,36 +25,43 @@ export default async function TeacherHome() {
     }),
   ]);
 
-  const kpis = [
-    { label: "Kelas", value: classCount },
-    { label: "Asesmen", value: assessmentCount },
-    { label: "LJK menunggu", value: pendingSubmissions },
-  ];
-
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-10">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold text-primary">Ruang kerja guru</h1>
-        <p className="text-sm text-muted-foreground">Halo, {session.user.name}.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-semibold text-primary">Ruang kerja guru</h1>
+          <p className="text-sm text-muted-foreground">Halo, {session.user.name}. Kelola kelas dan nilai esai siswa di sini.</p>
+        </div>
+        <Button asChild variant="solid">
+          <Link href="/guru/grading">Buka penilaian</Link>
+        </Button>
       </div>
-      <div className="grid grid-cols-3 gap-4">
-        {kpis.map((k) => (
-          <Card key={k.label} className="gap-1 px-5 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{k.label}</p>
-            <p className="text-2xl font-bold text-primary">{k.value}</p>
-          </Card>
-        ))}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard label="Kelas" value={classCount} icon={Building2} />
+        <StatCard label="Asesmen" value={assessmentCount} icon={FileText} />
+        <StatCard
+          label="LJK menunggu"
+          value={pendingSubmissions}
+          icon={ClipboardList}
+          tone={pendingSubmissions > 0 ? "warning" : "default"}
+        />
       </div>
+
       {pendingSubmissions > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg text-primary">Tugas menunggu penilaian</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Ada <span className="font-medium text-foreground">{pendingSubmissions} LJK</span> menunggu disahkan. Buka daftar penilaian untuk memprosesnya.
-          </CardContent>
+        <Card className="gap-3 px-5 py-4">
+          <p className="text-base font-semibold">Tugas menunggu penilaian</p>
+          <p className="text-sm text-muted-foreground">
+            Ada {pendingSubmissions} LJK yang sudah dikumpulkan dan belum disahkan.
+          </p>
+          <div>
+            <Button asChild variant="soft" size="sm">
+              <Link href="/guru/grading">Proses penilaian</Link>
+            </Button>
+          </div>
         </Card>
       ) : null}
+
       <ClassList />
       <AssessmentBuilder />
     </main>

@@ -17,9 +17,28 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 import { LogoutButton } from "@/app/logout-button";
 
 type Role = "TEACHER" | "STUDENT" | "ADMIN";
+
+const MOBILE_TITLE: Record<Role, string> = {
+  TEACHER: "Menu guru",
+  STUDENT: "Menu siswa",
+  ADMIN: "Menu admin",
+};
+
+const ROLE_LABEL: Record<Role, string> = {
+  TEACHER: "Guru",
+  STUDENT: "Siswa",
+  ADMIN: "Admin",
+};
+
+const ROLE_HOME: Record<Role, string> = {
+  TEACHER: "/guru",
+  STUDENT: "/siswa",
+  ADMIN: "/admin",
+};
 
 const NAV: Record<Role, { href: string; label: string; icon: React.ElementType }[]> = {
   TEACHER: [
@@ -44,11 +63,11 @@ export function AppSidebar({ role, name, children }: { role: Role; name: string;
     <SidebarProvider className="min-h-screen">
       <Sidebar
         aria-label="Navigasi utama"
-        mobileTitle={role === "TEACHER" ? "Menu guru" : "Menu siswa"}
+        mobileTitle={MOBILE_TITLE[role]}
         mobileDescription="Navigasi utama aplikasi ESAINA"
       >
         <SidebarHeader className="border-b-0 px-5">
-          <Link href={role === "TEACHER" ? "/guru" : role === "ADMIN" ? "/admin" : "/siswa"} className="flex items-center gap-2">
+          <Link href={ROLE_HOME[role]} className="flex items-center gap-2">
             <GraduationCap className="size-6 text-primary" aria-hidden />
             <span className="font-heading text-lg font-bold tracking-tight text-primary">ESAINA</span>
           </Link>
@@ -56,19 +75,16 @@ export function AppSidebar({ role, name, children }: { role: Role; name: string;
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
-              <nav aria-label={role === "TEACHER" ? "Menu guru" : role === "ADMIN" ? "Menu admin" : "Menu siswa"}>
+              <nav aria-label={`Navigasi ${ROLE_LABEL[role]}`}>
                 <SidebarMenu>
                   {NAV[role].map((item) => {
                     const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                     return (
                       <SidebarMenuItem key={item.href}>
-                        <SidebarMenuLink
-                          href={item.href}
-                          isActive={active}
-                          aria-current={active ? "page" : undefined}
-                        >
+                        <SidebarMenuLink href={item.href} isActive={active}>
                           <item.icon className="size-5 shrink-0" aria-hidden />
                           <span>{item.label}</span>
+                          {active && <span className="sr-only">(halaman aktif)</span>}
                         </SidebarMenuLink>
                       </SidebarMenuItem>
                     );
@@ -79,9 +95,12 @@ export function AppSidebar({ role, name, children }: { role: Role; name: string;
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="h-auto flex-col items-stretch gap-2 border-t-0 py-3">
-          <p className="truncate text-xs text-muted-foreground" title={name}>
-            {name}
-          </p>
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <p className="truncate text-xs text-muted-foreground" title={name}>
+              {name}
+            </p>
+            <Badge variant="soft">{ROLE_LABEL[role]}</Badge>
+          </div>
           <LogoutButton />
         </SidebarFooter>
       </Sidebar>

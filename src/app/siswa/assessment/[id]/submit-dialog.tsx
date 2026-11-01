@@ -6,10 +6,24 @@ import { api, HttpError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 
-export function SubmitDialog({ assessmentId, version, unanswered }: { assessmentId: string; version: number; unanswered: number }) {
+export function SubmitDialog({
+  assessmentId,
+  version,
+  unanswered,
+}: {
+  assessmentId: string;
+  version: number;
+  unanswered: number;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -36,16 +50,41 @@ export function SubmitDialog({ assessmentId, version, unanswered }: { assessment
       <DialogTrigger render={<Button size="lg" variant="solid" />}>Kumpulkan</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Kumpulkan pekerjaan?</DialogTitle>
+          <DialogTitle>Kumpulkan jawaban?</DialogTitle>
           <DialogDescription>
-            Setelah dikumpulkan, jawaban terkunci dan tidak bisa diubah.
-            {unanswered > 0 ? ` Masih ada ${unanswered} soal tanpa jawaban.` : ""}
+            Setelah dikumpulkan, jawaban tidak bisa diubah lagi.
           </DialogDescription>
         </DialogHeader>
-        {error ? <Alert variant="destructive" role="alert"><AlertDescription>{error}</AlertDescription></Alert> : null}
+
+        {unanswered > 0 ? (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Masih ada {unanswered} soal kosong. Soal kosong tidak dihitung nol, tetapi tidak bisa diisi lagi.
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
+
         <DialogFooter>
-          <Button variant="soft" onClick={() => setOpen(false)} disabled={pending}>Batal</Button>
-          <Button variant="solid" onClick={submit} disabled={pending || unanswered > 0}>{pending ? "Mengumpulkan…" : "Ya, kumpulkan"}</Button>
+          <Button
+            variant="soft"
+            onClick={() => setOpen(false)}
+            disabled={pending}
+          >
+            Periksa lagi
+          </Button>
+          <Button
+            variant="solid"
+            onClick={submit}
+            disabled={pending}
+          >
+            {pending ? "Mengumpulkan…" : "Ya, kumpulkan"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
