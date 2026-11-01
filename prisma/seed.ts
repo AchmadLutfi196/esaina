@@ -16,7 +16,13 @@ async function main() {
   const guru = await prisma.user.upsert({
     where: { email: "guru@demo.sch.id" },
     update: {},
-    create: { email: "guru@demo.sch.id", name: "Bu Dewi", passwordHash: hash, role: "TEACHER", anonCode: "T-DEMO" },
+    create: { email: "guru@demo.sch.id", name: "Bu Dewi", passwordHash: hash, role: "TEACHER", anonCode: "T-DEMO", identifier: "NIP-001" },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "admin@demo.sch.id" },
+    update: {},
+    create: { email: "admin@demo.sch.id", name: "Admin Sekolah", passwordHash: hash, role: "ADMIN", anonCode: "A-DEMO", identifier: "NIP-ADM" },
   });
 
   const students = await Promise.all(
@@ -25,7 +31,7 @@ async function main() {
       return prisma.user.upsert({
         where: { email: `${code.toLowerCase()}@demo.sch.id` },
         update: {},
-        create: { email: `${code.toLowerCase()}@demo.sch.id`, name: `Siswa ${code}`, passwordHash: hash, role: "STUDENT", anonCode: code },
+        create: { email: `${code.toLowerCase()}@demo.sch.id`, name: `Siswa ${code}`, passwordHash: hash, role: "STUDENT", anonCode: code, identifier: `NIS-${code}` },
       });
     })
   );

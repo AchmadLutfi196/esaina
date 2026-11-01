@@ -38,7 +38,7 @@ const GUARANTEES = [
 export default async function Home() {
   const session = await getServerSession(authOptions);
   const user = session?.user;
-  const workspaceHref = user?.role === "TEACHER" ? "/guru" : "/siswa";
+  const workspaceHref = user?.role === "TEACHER" ? "/guru" : user?.role === "ADMIN" ? "/admin" : "/siswa";
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -49,7 +49,7 @@ export default async function Home() {
           {user ? (
             <Button asChild variant="solid">
               <Link href={workspaceHref}>
-                {user.role === "TEACHER" ? "Ruang kerja guru" : "Daftar asesmen"}
+                {user.role === "TEACHER" ? "Ruang kerja guru" : user.role === "ADMIN" ? "Konsol admin" : "Daftar asesmen"}
               </Link>
             </Button>
           ) : (

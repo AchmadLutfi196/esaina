@@ -12,7 +12,13 @@ export async function requireUser(): Promise<SessionUser> {
 
 export async function requireTeacher(): Promise<SessionUser> {
   const user = await requireUser();
-  if (user.role !== "TEACHER") throw forbidden();
+  if (user.role !== "TEACHER" && user.role !== "ADMIN") throw forbidden();
+  return user;
+}
+
+export async function requireAdmin(): Promise<SessionUser> {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") throw forbidden();
   return user;
 }
 
@@ -22,11 +28,11 @@ export async function requireStudent(): Promise<SessionUser> {
   return user;
 }
 
-/** Guru pemilik kelas; ID valid tanpa kepemilikan tetap ditolak. */
+/** Guru pemilik kelas; ID valid tanpa kepemilikan tetap ditolak. Admin lulus. */
 export async function requireClassOwner(classId: string, user: SessionUser) {
   const klas = await prisma.class.findUnique({ where: { id: classId } });
   if (!klas) throw notFound("Kelas");
-  if (klas.teacherId !== user.id) throw forbidden();
+  if (klas.teacherId !== user.id && user.role !== "ADMIN") throw forbidden();
   return klas;
 }
 

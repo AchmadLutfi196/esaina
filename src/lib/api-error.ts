@@ -13,6 +13,8 @@ export class ApiError extends Error {
 export const unauthorized = () => new ApiError(401, "unauthorized", "Sesi tidak ditemukan atau kedaluwarsa.");
 export const forbidden = () => new ApiError(403, "forbidden", "Anda tidak memiliki akses ke data ini.");
 export const notFound = (what = "Data") => new ApiError(404, "not_found", `${what} tidak ditemukan.`);
+export const badRequest = (message: string, details?: unknown) =>
+  new ApiError(400, "bad_request", message, details);
 export const conflict = (message: string) =>
   new ApiError(409, "version_conflict", message);
 export const validationError = (details: unknown) =>

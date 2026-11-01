@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap, ClipboardList, Home, ChartColumn } from "lucide-react";
+import { GraduationCap, ClipboardList, Home, ChartColumn, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LogoutButton } from "@/app/logout-button";
 
-type Role = "TEACHER" | "STUDENT";
+type Role = "TEACHER" | "STUDENT" | "ADMIN";
 
 const NAV: Record<Role, { href: string; label: string; icon: React.ElementType }[]> = {
   TEACHER: [
@@ -29,6 +29,11 @@ const NAV: Record<Role, { href: string; label: string; icon: React.ElementType }
   STUDENT: [
     { href: "/siswa", label: "Beranda", icon: Home },
     { href: "/siswa/results", label: "Hasil", icon: ChartColumn },
+  ],
+  ADMIN: [
+    { href: "/admin", label: "Beranda", icon: Home },
+    { href: "/admin/users", label: "Pengguna", icon: Users },
+    { href: "/admin/monitoring", label: "Monitoring", icon: ChartColumn },
   ],
 };
 
@@ -43,7 +48,7 @@ export function AppSidebar({ role, name, children }: { role: Role; name: string;
         mobileDescription="Navigasi utama aplikasi ESAINA"
       >
         <SidebarHeader className="border-b-0 px-5">
-          <Link href={role === "TEACHER" ? "/guru" : "/siswa"} className="flex items-center gap-2">
+          <Link href={role === "TEACHER" ? "/guru" : role === "ADMIN" ? "/admin" : "/siswa"} className="flex items-center gap-2">
             <GraduationCap className="size-6 text-primary" aria-hidden />
             <span className="font-heading text-lg font-bold tracking-tight text-primary">ESAINA</span>
           </Link>
@@ -51,7 +56,7 @@ export function AppSidebar({ role, name, children }: { role: Role; name: string;
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
-              <nav aria-label={role === "TEACHER" ? "Menu guru" : "Menu siswa"}>
+              <nav aria-label={role === "TEACHER" ? "Menu guru" : role === "ADMIN" ? "Menu admin" : "Menu siswa"}>
                 <SidebarMenu>
                   {NAV[role].map((item) => {
                     const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
