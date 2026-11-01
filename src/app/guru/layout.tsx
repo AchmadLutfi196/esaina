@@ -8,9 +8,8 @@ export default async function TeacherLayout({ children }: { children: React.Reac
   if (!session?.user) redirect("/login");
   if (session.user.role !== "TEACHER") redirect("/siswa");
   return (
-    <div className="flex min-h-screen">
-      <AppSidebar role="TEACHER" name={session.user.name} />
-      <div className="flex flex-1 flex-col">{children}</div>
-    </div>
+    <AppSidebar role="TEACHER" name={session.user.name}>
+      {children}
+    </AppSidebar>
   );
 }

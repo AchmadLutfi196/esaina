@@ -68,7 +68,7 @@ export function LoginForm() {
         />
       </div>
 
-      <Button type="submit" variant="default" size="lg" disabled={pending}>
+      <Button type="submit" variant="solid" size="lg" disabled={pending}>
         {pending ? "Memproses…" : "Masuk"}
       </Button>
     </form>

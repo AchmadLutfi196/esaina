@@ -33,7 +33,7 @@ export function SubmitDialog({ assessmentId, version, unanswered }: { assessment
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="lg" variant="default">Kumpulkan</Button></DialogTrigger>
+      <DialogTrigger render={<Button size="lg" variant="solid" />}>Kumpulkan</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Kumpulkan pekerjaan?</DialogTitle>
@@ -44,8 +44,8 @@ export function SubmitDialog({ assessmentId, version, unanswered }: { assessment
         </DialogHeader>
         {error ? <Alert variant="destructive" role="alert"><AlertDescription>{error}</AlertDescription></Alert> : null}
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>Batal</Button>
-          <Button variant="default" onClick={submit} disabled={pending || unanswered > 0}>{pending ? "Mengumpulkan…" : "Ya, kumpulkan"}</Button>
+          <Button variant="soft" onClick={() => setOpen(false)} disabled={pending}>Batal</Button>
+          <Button variant="solid" onClick={submit} disabled={pending || unanswered > 0}>{pending ? "Mengumpulkan…" : "Ya, kumpulkan"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

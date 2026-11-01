@@ -12,10 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
-  SelectContent,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 
 type Kelas = { id: string; name: string };
@@ -79,9 +76,9 @@ export function AssessmentBuilder() {
         {create.isError ? <Alert variant="destructive"><AlertDescription>{create.error.message}</AlertDescription></Alert> : null}
         <div className="flex flex-col gap-2">
           <Label htmlFor="assessment-class">Kelas</Label>
-          <Select value={classId} onValueChange={setClassId}>
-            <SelectTrigger id="assessment-class"><SelectValue placeholder="Pilih kelas" /></SelectTrigger>
-            <SelectContent>{classes.data?.classes.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}</SelectContent>
+          <Select id="assessment-class" value={classId} onChange={(e) => setClassId(e.target.value)}>
+            <SelectItem value="" disabled>Pilih kelas</SelectItem>
+            {classes.data?.classes.map((k) => <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>)}
           </Select>
         </div>
         <div className="flex flex-col gap-2"><Label htmlFor="assessment-title">Judul</Label><Input id="assessment-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="UTS IPA" /></div>
@@ -96,12 +93,12 @@ export function AssessmentBuilder() {
           </div>
         ))}
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={() => setQuestions((items) => [...items, blankQuestion(items.length + 1)])}>Tambah soal</Button>
-          <Button type="button" variant="default" disabled={!classId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Menyimpan…" : "Simpan asesmen"}</Button>
+          <Button type="button" variant="soft" onClick={() => setQuestions((items) => [...items, blankQuestion(items.length + 1)])}>Tambah soal</Button>
+          <Button type="button" variant="solid" disabled={!classId || create.isPending} onClick={() => create.mutate()}>{create.isPending ? "Menyimpan…" : "Simpan asesmen"}</Button>
         </div>
         </CardContent>
       </Card>
-      {classId ? <section className="flex flex-col gap-3"><h2 className="text-2xl font-semibold text-primary">Asesmen kelas</h2>{assessments.data?.assessments.map((a) => <Card className="flex flex-row items-center justify-between gap-3 px-5" key={a.id}><div><p className="font-medium">{a.title}</p><p className="text-sm text-muted-foreground">{a.questionCount} soal</p></div><div className="flex items-center gap-2"><Badge variant="secondary">{a.status}</Badge>{a.status === "DRAFT" ? <Button size="sm" onClick={() => open.mutate(a.id)}>Buka</Button> : null}</div></Card>)}</section> : null}
+      {classId ? <section className="flex flex-col gap-3"><h2 className="text-2xl font-semibold text-primary">Asesmen kelas</h2>{assessments.data?.assessments.map((a) => <Card className="flex flex-row items-center justify-between gap-3 px-5" key={a.id}><div><p className="font-medium">{a.title}</p><p className="text-sm text-muted-foreground">{a.questionCount} soal</p></div><div className="flex items-center gap-2"><Badge variant="soft">{a.status}</Badge>{a.status === "DRAFT" ? <Button size="sm" onClick={() => open.mutate(a.id)}>Buka</Button> : null}</div></Card>)}</section> : null}
     </div>
   );
 }

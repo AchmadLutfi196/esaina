@@ -1,50 +1,41 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
-import { liquidProps, resolveVariant, type LiquidProps } from "@/lib/liquid-glass/material"
+import { cn } from "@/lib/utils";
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-  {
-    variants: {
-      variant: {
-        liquid: "text-foreground",
-        default:
-          "border border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
-        secondary:
-          "border border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "border text-foreground",
-        success: "border border-transparent bg-emerald-100/80 text-emerald-900 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-200",
-        warning: "border border-transparent bg-amber-100/80 text-amber-900 hover:bg-amber-100 dark:bg-amber-950/60 dark:text-amber-200",
-      },
-    },
-    defaultVariants: {
-      variant: "liquid",
-    },
-  }
-)
+const badgeVariants = {
+  default:
+    "border-[color:var(--neu-edge)] bg-[var(--neu-surface)] text-[var(--foreground)] shadow-none",
+  primary:
+    "border-transparent bg-[var(--neu-selected)] text-[var(--neu-accent-ink)] shadow-none",
+  soft: "border-transparent bg-[var(--neu-surface-low)] text-[var(--muted-foreground)]",
+  outline: "border-[color:var(--border)] bg-transparent text-[var(--foreground)]",
+  destructive:
+    "border-transparent bg-[color:var(--destructive)]/12 text-[var(--neu-error-text)]",
+  success:
+    "border-transparent bg-[color:var(--success)]/12 text-[color:var(--success)]",
+  warning:
+    "border-transparent bg-[color:var(--warning)]/14 text-[color:var(--warning)]",
+} as const;
 
-type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>
+type BadgeVariant = keyof typeof badgeVariants;
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, LiquidProps {
-  variant?: BadgeVariant | null
+interface BadgeProps extends React.ComponentProps<"span"> {
+  variant?: BadgeVariant;
 }
 
-function Badge({ className, variant, material, tint, glass, webgl, style, ...props }: BadgeProps) {
-  const v = resolveVariant<BadgeVariant>(variant ?? undefined, material)
-  const lg = v.variant === "liquid" ? liquidProps({ role: "inline", material: v.material, tint, glass, webgl }) : null
+function Badge({ className, variant = "default", ...props }: BadgeProps) {
   return (
-    <div
-      {...lg}
-      className={cn(badgeVariants({ variant: v.variant }), lg?.className, className)}
-      style={{ ...lg?.style, ...style }}
+    <span
+      data-slot="badge"
+      data-variant={variant}
+      className={cn(
+        "inline-flex w-fit max-w-full min-w-0 items-center justify-center gap-1 whitespace-normal [overflow-wrap:anywhere] break-keep text-balance align-middle text-center rounded-[var(--neu-radius-small)] border px-2 py-0.5 text-xs font-semibold leading-4 [&_svg]:pointer-events-none [&_svg]:size-3 [&_svg]:shrink-0",
+        badgeVariants[variant],
+        className,
+      )}
       {...props}
     />
-  )
+  );
 }
 
-export { Badge, badgeVariants }
-
+export { Badge, badgeVariants };

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const PROOF = [
   { value: "Per kriteria", label: "Saran skor mengikuti rubrik, bukan angka tunggal" },
@@ -46,13 +47,13 @@ export default async function Home() {
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between py-5">
           <span className="text-lg font-bold tracking-tight text-primary">ESAINA</span>
           {user ? (
-            <Button asChild variant="default">
+            <Button asChild variant="solid">
               <Link href={workspaceHref}>
                 {user.role === "TEACHER" ? "Ruang kerja guru" : "Daftar asesmen"}
               </Link>
             </Button>
           ) : (
-            <Button asChild variant="default">
+            <Button asChild variant="solid">
               <Link href="/login">Masuk</Link>
             </Button>
           )}
@@ -69,7 +70,7 @@ export default async function Home() {
             kutipan dari jawaban siswa — semuanya diperiksa guru sebelum diterbitkan.
           </p>
           <div className="mt-8">
-            <Button asChild size="lg" variant="default">
+            <Button asChild size="lg" variant="solid">
               <Link href={user ? workspaceHref : "/login"}>
                 {user ? "Lanjutkan ke ruang kerja" : "Coba dengan akun demo"}
               </Link>
@@ -77,16 +78,16 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Satu-satunya permukaan kaca di halaman ini */}
+        {/* Statistik — strip permukaan raised */}
         <div className="mx-auto w-full max-w-6xl pb-2 sm:pb-6">
-          <div className="lg lg-clear lg-bar grid gap-6 px-8 py-5 sm:grid-cols-3">
+          <Card className="grid gap-6 px-8 py-5 sm:grid-cols-3">
             {PROOF.map((p) => (
               <div key={p.value} className="flex flex-col gap-0.5">
                 <p className="text-lg font-bold text-primary">{p.value}</p>
                 <p className="text-sm leading-snug text-muted-foreground">{p.label}</p>
               </div>
             ))}
-          </div>
+          </Card>
         </div>
       </section>
 
@@ -114,7 +115,7 @@ export default async function Home() {
           </ol>
         </section>
 
-        {/* Penilaian — panel solid yang meniru halaman grade asli, tanpa glass */}
+        {/* Penilaian — panel solid yang meniru halaman grade asli */}
         <section className="border-t border-border py-20">
           <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:items-center">
             <div className="flex flex-col gap-4">
@@ -128,7 +129,7 @@ export default async function Home() {
                 keputusan guru.
               </p>
             </div>
-            <div className="rounded-2xl border border-border bg-white/95 p-5 shadow-sm">
+            <Card className="p-5">
               <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
                 <div>
                   <p className="text-sm font-semibold text-primary">Soal 1 · Fotosintesis</p>
@@ -166,7 +167,7 @@ export default async function Home() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
         </section>
 

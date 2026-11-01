@@ -1,70 +1,59 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
-import { liquidProps, resolveVariant, type LiquidProps } from "@/lib/liquid-glass/material"
+import { cn } from "@/lib/utils";
 
-const alertVariants = cva(
-  "relative w-full px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
-  {
-    variants: {
-      variant: {
-        liquid: "rounded-[20px]",
-        default: "rounded-lg border bg-background text-foreground",
-        destructive:
-          "rounded-lg border border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
-      },
-    },
-    defaultVariants: {
-      variant: "liquid",
-    },
-  }
-)
+const alertVariants = {
+  default:
+    "border-[color:var(--neu-edge)] bg-[var(--neu-surface)] text-[var(--foreground)] shadow-none",
+  destructive:
+    "border-transparent bg-[var(--neu-surface)] [&>svg]:text-[var(--neu-error-text)] text-[var(--foreground)] shadow-none",
+  success:
+    "border-transparent bg-[var(--neu-surface)] [&>svg]:text-[var(--success)] text-[var(--foreground)] shadow-none",
+} as const;
 
-type AlertVariant = NonNullable<VariantProps<typeof alertVariants>["variant"]>
+type AlertVariant = keyof typeof alertVariants;
 
-const Alert = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & LiquidProps & { variant?: AlertVariant | null }
->(({ className, variant, material, tint, glass, webgl, style, ...props }, ref) => {
-  const v = resolveVariant<AlertVariant>(variant ?? undefined, material)
-  const lg = v.variant === "liquid" ? liquidProps({ role: "surface", material: v.material, tint, glass, webgl }) : null
+interface AlertProps extends React.ComponentProps<"div"> {
+  variant?: AlertVariant;
+}
+
+function Alert({ className, variant = "default", ...props }: AlertProps) {
   return (
     <div
-      ref={ref}
+      data-slot="alert"
+      data-variant={variant}
       role="alert"
-      {...lg}
-      className={cn(alertVariants({ variant: v.variant }), lg?.className, className)}
-      style={{ ...lg?.style, ...style }}
+      className={cn(
+        "relative grid w-full min-w-0 grid-cols-[0_1fr] items-start gap-y-1 rounded-[var(--neu-radius-surface)] border px-4 py-3 [box-shadow:var(--neu-shadow-inset-sm)] text-sm has-[>svg]:grid-cols-[1.125rem_1fr] has-[>svg]:gap-x-3 [&>svg]:col-start-1 [&>svg]:row-start-1 [&>svg]:row-span-2 [&>svg]:mt-0.5 [&>svg]:size-4 [&>svg]:text-current",
+        alertVariants[variant],
+        className,
+      )}
       {...props}
     />
-  )
-})
-Alert.displayName = "Alert"
+  );
+}
 
-const AlertTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h5
-    ref={ref}
-    className={cn("mb-1 font-medium leading-none tracking-tight", className)}
-    {...props}
-  />
-))
-AlertTitle.displayName = "AlertTitle"
+function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-title"
+      className={cn("col-start-2 min-w-0 font-semibold leading-5 tracking-tight", className)}
+      {...props}
+    />
+  );
+}
 
-const AlertDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("text-sm [&_p]:leading-relaxed", className)}
-    {...props}
-  />
-))
-AlertDescription.displayName = "AlertDescription"
+function AlertDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-description"
+      className={cn(
+        "col-start-2 grid min-w-0 justify-items-start gap-1 text-sm leading-relaxed text-current [&_p]:leading-relaxed",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-export { Alert, AlertTitle, AlertDescription }
-
+export { Alert, AlertDescription, AlertTitle, alertVariants };
