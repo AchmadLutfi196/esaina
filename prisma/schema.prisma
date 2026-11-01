@@ -12,6 +12,7 @@ datasource db {
 enum Role {
   TEACHER
   STUDENT
+  ADMIN
 }
 
 enum AssessmentStatus {
@@ -50,6 +51,8 @@ model User {
   name         String
   passwordHash String
   role         Role
+  identifier   String?  // NIP guru / NIS siswa
+  isActive     Boolean  @default(true)
   anonCode     String   @unique @default(cuid()) // kode anonim untuk LLM, bukan nama/email
   createdAt    DateTime @default(now())
 
