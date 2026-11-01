@@ -49,10 +49,9 @@ export function LoginForm() {
           id="email"
           name="email"
           type="email"
-          autoComplete="username"
+          autoComplete="email"
           required
           disabled={pending}
-          placeholder="guru@demo.sch.id"
         />
       </div>
 
@@ -68,7 +67,7 @@ export function LoginForm() {
         />
       </div>
 
-      <Button type="submit" variant="solid" size="lg" disabled={pending}>
+      <Button type="submit" variant="solid" className="w-full" disabled={pending}>
         {pending ? "Memproses…" : "Masuk"}
       </Button>
     </form>

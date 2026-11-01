@@ -2,12 +2,28 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Users } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type Kelas = { id: string; name: string };
 
@@ -37,23 +53,19 @@ export function StudentClasses() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <form onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
-        {join.isError ? (
-          <Alert variant="destructive" role="alert">
-            <AlertDescription>
-              {join.error instanceof Error ? join.error.message : "Gagal bergabung ke kelas."}
-            </AlertDescription>
-          </Alert>
-        ) : null}
-        {joined ? (
-          <Alert role="status">
-            <AlertDescription>
-              Berhasil bergabung ke kelas <strong>{joined}</strong>.
-            </AlertDescription>
-          </Alert>
-        ) : null}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+    <Card>
+      <CardHeader>
+        <CardTitle>Kelas saya</CardTitle>
+        <CardDescription>
+          Gabung dengan kode dari guru, lalu kerjakan asesmen yang dibuka.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <form
+          onSubmit={onSubmit}
+          className="flex flex-col gap-2 sm:flex-row sm:items-end"
+          noValidate
+        >
           <div className="flex flex-1 flex-col gap-2">
             <Label htmlFor="joinCode">Kode kelas</Label>
             <Input
@@ -61,50 +73,87 @@ export function StudentClasses() {
               name="joinCode"
               required
               disabled={join.isPending}
-              placeholder="XIIA01"
+              placeholder="Contoh: XIIA01"
               className="uppercase tracking-widest"
             />
           </div>
-          <Button type="submit" variant="solid" disabled={join.isPending}>
-            {join.isPending ? "Bergabung…" : "Gabung kelas"}
+          <Button
+            type="submit"
+            variant="solid"
+            disabled={join.isPending}
+          >
+            {join.isPending ? "Bergabung…" : "Gabung"}
           </Button>
-        </div>
-      </form>
+        </form>
 
-      <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium text-primary">Kelas diikuti</h2>
+        {join.isError ? (
+          <Alert variant="destructive">
+            <AlertTitle>Gagal bergabung</AlertTitle>
+            <AlertDescription>
+              {join.error instanceof Error ? join.error.message : "Gagal bergabung ke kelas."}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
+        {joined ? (
+          <Alert variant="success">
+            <AlertTitle>Berhasil bergabung</AlertTitle>
+            <AlertDescription>
+              Anda sekarang anggota kelas {joined}.
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
         {mineQuery.isPending ? (
-          <p className="text-sm text-muted-foreground" role="status">
+          <p
+            className="text-sm text-muted-foreground"
+            role="status"
+          >
             Memuat kelas…
           </p>
         ) : null}
+
         {mineQuery.isError ? (
-          <Alert variant="destructive" role="alert">
-            <AlertDescription className="flex items-center justify-between gap-3">
-              <span>
-                {mineQuery.error instanceof Error ? mineQuery.error.message : "Gagal memuat kelas."}
-              </span>
-              <Button size="sm" variant="soft" onClick={() => void mineQuery.refetch()}>
+          <Alert variant="destructive">
+            <AlertTitle>Gagal memuat kelas</AlertTitle>
+            <AlertDescription className="flex flex-col items-start gap-2">
+              <span>{mineQuery.error.message}</span>
+              <Button
+                size="sm"
+                variant="soft"
+                onClick={() => void mineQuery.refetch()}
+              >
                 Coba lagi
               </Button>
             </AlertDescription>
           </Alert>
         ) : null}
+
         {mineQuery.data?.classes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Anda belum bergabung ke kelas mana pun. Masukkan kode kelas dari guru.
-          </p>
+          <EmptyState
+            icon={Users}
+            title="Belum mengikuti kelas"
+            description="Masukkan kode gabung dari guru untuk mulai."
+          />
         ) : null}
+
         {mineQuery.data && mineQuery.data.classes.length > 0 ? (
-          <ul className="flex flex-wrap gap-2">
-            {mineQuery.data.classes.map((k) => (
-              <li key={k.id}>
-                <Badge variant="soft">{k.name}</Badge>
-              </li>
-            ))}
-          </ul>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Kelas</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mineQuery.data.classes.map((k) => (
+                <TableRow key={k.id}>
+                  <TableCell className="font-medium">{k.name}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : null}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

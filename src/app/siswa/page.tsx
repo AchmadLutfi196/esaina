@@ -1,11 +1,13 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
+import { BadgeCheck, BookOpen, FileText } from "lucide-react";
 import { authOptions } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
 import { StudentClasses } from "./student-classes";
 import { AssessmentList } from "./assessment-list";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { StatCard } from "@/components/ui/stat-card";
 
 export const metadata = { title: "Kelas saya — ESAINA" };
 
@@ -25,39 +27,33 @@ export default async function StudentHome() {
     }),
   ]);
 
-  const stats = [
-    { label: "Kelas diikuti", value: classCount },
-    { label: "Asesmen terbuka", value: openAssessments },
-    { label: "Hasil terbit", value: publishedResults },
-  ];
-
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-10">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-semibold text-primary">Kelas saya</h1>
-        <p className="text-sm text-muted-foreground">Halo, {session.user.name}.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-semibold text-primary">Kelas saya</h1>
+          <p className="text-sm text-muted-foreground">Halo, {session.user.name}. Kerjakan asesmen dan lihat hasil yang sudah diterbitkan.</p>
+        </div>
+        {publishedResults > 0 ? (
+          <Button asChild variant="soft">
+            <Link href="/siswa/results">Lihat hasil</Link>
+          </Button>
+        ) : null}
       </div>
-      <div className="grid grid-cols-3 gap-4">
-        {stats.map((k) => (
-          <Card key={k.label} className="gap-1 px-5 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{k.label}</p>
-            <p className="text-2xl font-bold text-primary">{k.value}</p>
-          </Card>
-        ))}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard label="Kelas diikuti" value={classCount} icon={BookOpen} />
+        <StatCard label="Asesmen terbuka" value={openAssessments} icon={FileText} />
+        <StatCard
+          label="Hasil terbit"
+          value={publishedResults}
+          icon={BadgeCheck}
+          tone={publishedResults > 0 ? "success" : "default"}
+        />
       </div>
-      {publishedResults > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg text-primary">Hasil penilaian</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            <Link href="/siswa/results" className="font-medium text-foreground underline-offset-4 hover:underline">
-              Lihat {publishedResults} hasil yang sudah diterbitkan
-            </Link>
-          </CardContent>
-        </Card>
-      ) : null}
+
       <StudentClasses />
+
       <section className="flex flex-col gap-3">
         <h2 className="text-2xl font-semibold text-primary">Asesmen terbuka</h2>
         <AssessmentList />
