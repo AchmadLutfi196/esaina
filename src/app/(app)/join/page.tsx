@@ -7,7 +7,9 @@ export const metadata = { title: "Gabung Kelas" };
 export default async function JoinClassPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (session.user.role !== "student") redirect("/dashboard");
+  const role = String(session.user.role).toLowerCase() as any;
+  if (role !== "student") redirect("/dashboard");
 
   return <JoinClassView />;
 }
+export const dynamic = "force-dynamic";

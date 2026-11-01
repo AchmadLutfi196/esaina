@@ -19,3 +19,4 @@ export default async function LoginPage() {
     </div>
   );
 }
+export const dynamic = "force-dynamic";

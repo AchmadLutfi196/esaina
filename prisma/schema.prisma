@@ -1,322 +1,285 @@
-// ESAINA — Explainable Essay Assessment Platform
-// Prisma schema mirroring the Laravel LMS reference at
-// /home/luffi/Documents/proposal/lms
-
+// ESAINA — PRD bagian 8 (Data, hak akses, dan riwayat)
+// Semua mutasi bawa versi (expected_version) -> 409 saat konflik.
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
-// ─────────────────────────────────────────────────────────────
-// Users & Roles
-// ─────────────────────────────────────────────────────────────
-
 enum Role {
-  admin
-  teacher
-  student
+  TEACHER
+  STUDENT
+  ADMIN
+}
+
+enum AssessmentStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum SubmissionStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+enum GradeStatus {
+  DRAFT
+  FINAL
+}
+
+enum GradeSource {
+  MANUAL
+  AI
+}
+
+enum AuditAction {
+  SUBMIT
+  APPLY_AI
+  CHANGE_GRADE
+  APPROVE
+  PUBLISH
+  DELETE
 }
 
 model User {
-  id         String   @id @default(cuid())
-  name       String
-  email      String   @unique
-  password   String
-  role       Role     @default(student)
-  identifier String?  // NIP for teachers, NIS for students
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+  identifier   String?  // NIP guru / NIS siswa
+  anonCode     String   @unique @default(cuid()) // kode anonim untuk LLM, bukan nama/email
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
 
-  // Relations
-  createdClasses      Class[]              @relation("ClassCreator")
-  enrollments         Enrollment[]
-  createdAssessments  Assessment[]         @relation("AssessmentCreator")
-  raterAssignments    AssessmentRater[]
-  submissions         Submission[]         @relation("StudentSubmissions")
-  ratings             Rating[]
-  finalizedAnswers    Answer[]             @relation("AnswerFinalizer")
-  finalizedSubmissions Submission[]        @relation("SubmissionFinalizer")
-  gradeHistories      GradeHistory[]
-
-  @@index([role])
+  taughtClasses     Class[]           @relation("ClassTeacher")
+  memberships       ClassMembership[] @relation("MembershipStudent")
+  submissions       Submission[]
+  gradeRevisions    GradeRevision[]   @relation("GradeAuthor")
+  approvedRevisions GradeRevision[]   @relation("GradeApprovedBy")
+  publications      Publication[]
+  aiResults         AIResult[]
+  auditEvents       AuditEvent[]
 }
-
-// ─────────────────────────────────────────────────────────────
-// Classes (Google Classroom style hierarchy)
-// ─────────────────────────────────────────────────────────────
 
 model Class {
-  id            String   @id @default(cuid())
-  name          String
-  subject       String
-  grade         String
-  academicYear  String
-  classCode     String   @unique
-  creatorId     String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String
+  joinCode   String   @unique
+  teacherId  String
+  createdAt  DateTime @default(now())
 
-  creator     User         @relation("ClassCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  teacher     User              @relation("ClassTeacher", fields: [teacherId], references: [id])
+  memberships ClassMembership[]
   assessments Assessment[]
-  enrollments Enrollment[]
 
-  @@index([creatorId])
+  @@index([teacherId])
 }
 
-model Enrollment {
+model ClassMembership {
   id        String   @id @default(cuid())
   classId   String
   studentId String
   joinedAt  DateTime @default(now())
 
   class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
-  student User  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student User  @relation("MembershipStudent", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([classId, studentId])
   @@index([studentId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// Assessments
-// ─────────────────────────────────────────────────────────────
-
-enum AssessmentStatus {
-  draft
-  active
-  completed
-}
-
-enum PublicationStatus {
-  unpublished
-  published
-}
-
 model Assessment {
-  id                String            @id @default(cuid())
-  classId           String
-  creatorId         String
-  title             String
-  code              String            @unique
-  subject           String
-  status            AssessmentStatus  @default(draft)
-  publicationStatus PublicationStatus @default(unpublished)
-  publishedAt       DateTime?
-  dueDate           DateTime
-  durationMinutes   Int               @default(60)
-  raterCount        Int               @default(1)
-  targetRaters      Int               @default(1)
-  instructions      String            @default("")
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id          String           @id @default(cuid())
+  classId     String
+  title       String
+  instruction String
+  status      AssessmentStatus @default(DRAFT)
+  version     Int              @default(1)
+  openedAt    DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime         @default(now())
 
-  class   Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
-  creator User              @relation("AssessmentCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  questions   Question[]
-  submissions Submission[]
-  raters      AssessmentRater[]
+  class        Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  questions    Question[]
+  submissions  Submission[]
+  publications Publication[]
 
   @@index([classId])
-  @@index([creatorId])
-  @@index([status])
 }
-
-model AssessmentRater {
-  id           String   @id @default(cuid())
-  assessmentId String
-  raterId      String
-  assignedAt   DateTime @default(now())
-
-  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  rater      User       @relation(fields: [raterId], references: [id], onDelete: Cascade)
-
-  @@unique([assessmentId, raterId])
-}
-
-// ─────────────────────────────────────────────────────────────
-// Questions & Rubric
-// ─────────────────────────────────────────────────────────────
 
 model Question {
-  id              String @id @default(cuid())
+  id              String   @id @default(cuid())
   assessmentId    String
-  orderNumber     Int
-  prompt          String
-  referenceAnswer String @default("")
-  maxScore        Int    @default(25)
-  expectedKeywords String @default("[]") // JSON array of key points
+  order           Int
+  text            String
+  referenceAnswer String // acuan: tidak pernah dikirim ke siswa
+  maxScore        Int
+  createdAt       DateTime @default(now())
 
-  assessment Assessment       @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  rubric     RubricCriterion[]
+  assessment Assessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  criteria   RubricCriterion[]
   answers    Answer[]
 
-  @@unique([assessmentId, orderNumber])
+  @@unique([assessmentId, order])
   @@index([assessmentId])
-}
-
-model CriterionScore {
-  id          String @id @default(cuid())
-  answerId    String
-  criterionId String
-  score       Int    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  answer    Answer          @relation(fields: [answerId], references: [id], onDelete: Cascade)
-  criterion RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
-
-  @@unique([answerId, criterionId])
-  @@index([criterionId])
 }
 
 model RubricCriterion {
   id          String @id @default(cuid())
   questionId  String
-  name        String
-  weight      Int    @default(25) // percentage
-  maxScore    Int    @default(25)
-  description String @default("")
-  levels      String @default("[]") // JSON array of { score, label, description }
+  code        String // C1, C2, ...
+  description String
+  minScore    Int
+  maxScore    Int
+  levels      Json // level/rentang skor untuk bimbingan penilaian
+  order       Int
 
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  criterionScores CriterionScore[]
+  question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  gradeItems GradeItem[]
 
+  @@unique([questionId, code])
   @@index([questionId])
-}
-
-// ─────────────────────────────────────────────────────────────
-// Submissions & Answers
-// ─────────────────────────────────────────────────────────────
-
-enum WorkStatus {
-  not_started
-  draft
-  submitted
-}
-
-enum GradingStatus {
-  ungraded
-  draft_graded
-  final
 }
 
 model Submission {
-  id                 String        @id @default(cuid())
-  assessmentId       String
-  studentId          String
-  statusWork         WorkStatus    @default(not_started)
-  statusGrading      GradingStatus @default(ungraded)
-  submittedAt        DateTime?
-  startedAt          DateTime?
-  overallFinalScore  Int?
-  publishedScore     Int?
-  teacherGeneralNotes String       @default("")
-  finalizedBy        String?
-  finalizedAt        DateTime?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  id           String           @id @default(cuid())
+  assessmentId String
+  studentId    String
+  status       SubmissionStatus @default(IN_PROGRESS)
+  version      Int              @default(1) // versi draft answers
+  submittedAt  DateTime?
+  createdAt    DateTime         @default(now())
 
-  assessment  Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-  student     User       @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
-  finalizer   User?      @relation("SubmissionFinalizer", fields: [finalizedBy], references: [id])
-  answers     Answer[]
-  gradeHistories GradeHistory[]
+  assessment     Assessment      @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  student        User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers        Answer[]
+  aiResults      AIResult[]
+  gradeRevisions GradeRevision[]
 
   @@unique([assessmentId, studentId])
   @@index([studentId])
-  @@index([statusGrading])
-}
-
-enum AnswerStatus {
-  waiting_raters
-  ready_for_review
-  completed
-}
-
-enum IndoBertStatus {
-  pending
-  available
-  unavailable
+  @@index([assessmentId, status])
 }
 
 model Answer {
-  id             String         @id @default(cuid())
-  submissionId   String
-  questionId     String
-  studentAnswer  String         @default("")
-  charCount      Int            @default(0)
-  wordCount      Int            @default(0)
-  indobertScore  Int?
-  indobertStatus IndoBertStatus @default(pending)
-  finalScore     Int?
-  finalScoreBy   String?
-  finalScoreAt   DateTime?
-  status         AnswerStatus   @default(waiting_raters)
-  teacherFeedback String        @default("")
-  aiExplanation  String?        // JSON of AiExplanation
-  isAiApplied    Boolean        @default(false)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id           String   @id @default(cuid())
+  submissionId String
+  questionId   String
+  content      String   @db.Text
+  version      Int      @default(1)
+  savedAt      DateTime @default(now())
 
   submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  finalizer  User?      @relation("AnswerFinalizer", fields: [finalScoreBy], references: [id])
-  ratings    Rating[]
-  criterionScores CriterionScore[]
 
   @@unique([submissionId, questionId])
-  @@index([questionId])
-  @@index([status])
 }
 
-model Rating {
-  id       String   @id @default(cuid())
-  answerId String
-  raterId  String
-  score    Int      @default(0)
-  ratedAt  DateTime @default(now())
+model AIResult {
+  id            String   @id @default(cuid())
+  submissionId  String
+  requestedById String
+  provider      String
+  model         String
+  promptVersion String
+  cacheKey      String
+  sourceVersion Int // versi submission saat request
+  payload       Json // hasil per kriteria (question_id, criterion_id, score, evidence, rationale, feedback)
+  validationOk  Boolean
+  validationMsg String?
+  tokenUsed     Int?
+  attemptedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
 
-  answer Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
-  rater  User   @relation(fields: [raterId], references: [id], onDelete: Cascade)
+  submission   Submission  @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  requestedBy  User        @relation(fields: [requestedById], references: [id])
+  appliedItems GradeItem[]
 
-  @@unique([answerId, raterId])
-  @@index([raterId])
+  @@index([submissionId, cacheKey])
+  @@index([submissionId, createdAt(sort: Desc)])
 }
 
-// ─────────────────────────────────────────────────────────────
-// Audit trail — explainability of every grade change
-// ─────────────────────────────────────────────────────────────
-
-enum GradeAction {
-  ai_pregrade
-  score_adjustment
-  feedback_edit
-  status_change
-  finalized
-}
-
-model GradeHistory {
+model GradeRevision {
   id           String      @id @default(cuid())
   submissionId String
-  questionId   String?
-  raterId      String?
-  action       GradeAction
-  actionLabel  String      @default("")
-  previousScore Int?
-  newScore     Int?
-  scoreDelta   Int?
-  previousFeedback String?
-  newFeedback  String?
-  note         String      @default("")
+  authorId     String
+  approvedById String?
+  status       GradeStatus @default(DRAFT)
+  version      Int         @default(1) // versi revisi nilai
+  totalScore   Int         @default(0)
   createdAt    DateTime    @default(now())
+  approvedAt   DateTime?
 
-  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  rater      User?      @relation(fields: [raterId], references: [id])
+  submission   Submission    @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  author       User          @relation("GradeAuthor", fields: [authorId], references: [id])
+  approvedBy   User?         @relation("GradeApprovedBy", fields: [approvedById], references: [id])
+  items        GradeItem[]
+  publications Publication[]
 
-  @@index([submissionId])
-  @@index([createdAt])
+  @@index([submissionId, status])
+  @@index([submissionId, version])
+}
+
+model GradeItem {
+  id          String      @id @default(cuid())
+  revisionId  String
+  questionId  String
+  criterionId String
+  score       Int?
+  feedback    String      @db.Text
+  source      GradeSource @default(MANUAL)
+  aiResultId  String? // ID draf AI yang diterapkan
+  createdAt   DateTime    @default(now())
+
+  revision  GradeRevision   @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  criterion RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  aiResult  AIResult?       @relation(fields: [aiResultId], references: [id])
+
+  @@unique([revisionId, questionId, criterionId])
+  @@index([criterionId])
+}
+
+model Publication {
+  id            String   @id @default(cuid())
+  assessmentId  String
+  revisionId    String
+  publishedById String
+  publishedAt   DateTime @default(now())
+
+  assessment  Assessment    @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  revision    GradeRevision @relation(fields: [revisionId], references: [id])
+  publishedBy User          @relation(fields: [publishedById], references: [id])
+
+  @@unique([revisionId]) // satu revisi terbit sekali
+  @@index([assessmentId])
+}
+
+model AuditEvent {
+  id            String      @id @default(cuid())
+  actorId       String
+  action        AuditAction
+  entityType    String // "Submission" | "GradeRevision" | ...
+  entityId      String
+  versionBefore Int?
+  versionAfter  Int?
+  createdAt     DateTime    @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+}
+
+model IdempotencyKey {
+  key       String   @id
+  userId    String
+  scope     String // "submit" | "approve" | "publish"
+  createdAt DateTime @default(now())
+
+  @@index([userId, scope])
 }

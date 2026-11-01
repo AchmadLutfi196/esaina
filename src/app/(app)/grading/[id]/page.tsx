@@ -13,7 +13,8 @@ export default async function GradingPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { id: userId, role } = session.user;
+  const userId = session.user.id;
+  const role = String(session.user.role).toLowerCase() as any;
   if (role === "student") redirect("/dashboard");
 
   const { id: assessmentId } = await params;

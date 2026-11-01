@@ -4,7 +4,7 @@
 // client components (dates as ISO strings, records keyed by id).
 // ─────────────────────────────────────────────────────────────
 
-export type Role = "admin" | "teacher" | "student";
+export type Role = "admin" | "teacher" | "student" | "ADMIN" | "TEACHER" | "STUDENT";
 export type AssessmentStatus = "draft" | "active" | "completed";
 export type PublicationStatus = "unpublished" | "published";
 export type WorkStatus = "not_started" | "draft" | "submitted";
@@ -148,6 +148,9 @@ export const ROLE_LABEL: Record<Role, string> = {
   admin: "Administrator",
   teacher: "Guru",
   student: "Siswa",
+  ADMIN: "Administrator",
+  TEACHER: "Guru",
+  STUDENT: "Siswa",
 };
 
 export const ASSESSMENT_STATUS_LABEL: Record<AssessmentStatus, string> = {

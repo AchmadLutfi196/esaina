@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-type Tone =
+export type Tone =
   | "neutral"
   | "draft"
   | "active"
@@ -27,12 +27,12 @@ const toneStyles: Record<Tone, string> = {
 /** Maps any domain status string to a visual tone. */
 export function toneForStatus(status: string): Tone {
   const s = status.toLowerCase();
-  if (s.includes("aktif") || s.includes("dibuka") || s.includes("terbit") || s.includes("memeriksa"))
+  if (s.includes("aktif") || s.includes("dibuka") || s.includes("terbit") || s.includes("memeriksa") || s.includes("open"))
     return "active";
   if (s.includes("kumpul") || s.includes("submitted")) return "submitted";
   if (s.includes("final") || s.includes("selesai") || s.includes("completed")) return "final";
   if (s.includes("ai") || s.includes("indobert")) return "ai";
-  if (s.includes("tutup") || s.includes("inactive") || s.includes("terlambat")) return "warning";
+  if (s.includes("tutup") || s.includes("inactive") || s.includes("terlambat") || s.includes("closed")) return "warning";
   if (s.includes("draf") || s.includes("belum") || s.includes("draft")) return "draft";
   return "neutral";
 }
@@ -40,14 +40,29 @@ export function toneForStatus(status: string): Tone {
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   tone?: Tone;
   status?: string;
+  variant?: string;
 }
 
-export function Badge({ className, tone, status, children, ...props }: BadgeProps) {
-  const resolvedTone = tone ?? (status ? toneForStatus(status) : "neutral");
+export function Badge({ className, tone, status, variant, children, ...props }: BadgeProps) {
+  let resolvedTone: Tone = "neutral";
+  if (tone) {
+    resolvedTone = tone;
+  } else if (status) {
+    resolvedTone = toneForStatus(status);
+  } else if (variant === "success") {
+    resolvedTone = "success";
+  } else if (variant === "warning") {
+    resolvedTone = "warning";
+  } else if (variant === "destructive") {
+    resolvedTone = "danger";
+  } else if (variant === "secondary") {
+    resolvedTone = "draft";
+  }
+
   return (
     <span
       className={cn(
-        "inline-block whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+        "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
         toneStyles[resolvedTone],
         className
       )}
@@ -57,3 +72,5 @@ export function Badge({ className, tone, status, children, ...props }: BadgeProp
     </span>
   );
 }
+
+export const badgeVariants = () => "";

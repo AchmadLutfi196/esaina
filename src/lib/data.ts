@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { safeJsonParse, countWords } from "@/lib/utils";
 import type {
-  AiExplanation,
   Assessment,
   ClassItem,
   Question,
@@ -15,17 +14,18 @@ import type {
 // ─────────────────────────────────────────────────────────────
 
 export async function getClassesForUser(userId: string, role: string) {
+  const r = role.toLowerCase();
   const where =
-    role === "student"
-      ? { enrollments: { some: { studentId: userId } } }
-      : role === "admin"
+    r === "student"
+      ? { memberships: { some: { studentId: userId } } }
+      : r === "admin"
         ? {}
-        : { creatorId: userId };
+        : { teacherId: userId };
 
   const classes = await prisma.class.findMany({
     where,
     include: {
-      _count: { select: { enrollments: true, assessments: true } },
+      _count: { select: { memberships: true, assessments: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -33,28 +33,40 @@ export async function getClassesForUser(userId: string, role: string) {
   return classes.map<ClassItem>((c) => ({
     id: c.id,
     name: c.name,
-    subject: c.subject,
-    grade: c.grade,
-    academicYear: c.academicYear,
-    classCode: c.classCode,
-    studentCount: c._count.enrollments,
+    subject: c.name.includes("—") ? c.name.split("—")[1]?.trim() : c.name,
+    grade: "XII",
+    academicYear: "2026/2027 Ganjil",
+    classCode: c.joinCode,
+    studentCount: c._count.memberships,
     assessmentCount: c._count.assessments,
   }));
 }
 
 export async function getClassById(classId: string, userId: string, role: string) {
+  const r = role.toLowerCase();
   const cls = await prisma.class.findFirst({
     where: {
       id: classId,
-      ...(role === "student"
-        ? { enrollments: { some: { studentId: userId } } }
-        : role === "admin"
+      ...(r === "student"
+        ? { memberships: { some: { studentId: userId } } }
+        : r === "admin"
           ? {}
-          : { creatorId: userId }),
+          : { teacherId: userId }),
     },
     include: {
-      _count: { select: { enrollments: true, assessments: true } },
-      creator: { select: { name: true } },
+      teacher: { select: { id: true, name: true, email: true } },
+      memberships: {
+        include: {
+          student: { select: { id: true, name: true, identifier: true } },
+        },
+      },
+      assessments: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          questions: { select: { id: true } },
+          _count: { select: { submissions: true } },
+        },
+      },
     },
   });
 
@@ -63,13 +75,29 @@ export async function getClassById(classId: string, userId: string, role: string
   return {
     id: cls.id,
     name: cls.name,
-    subject: cls.subject,
-    grade: cls.grade,
-    academicYear: cls.academicYear,
-    classCode: cls.classCode,
-    studentCount: cls._count.enrollments,
-    assessmentCount: cls._count.assessments,
-    creatorName: cls.creator.name,
+    subject: cls.name.includes("—") ? cls.name.split("—")[1]?.trim() : cls.name,
+    grade: "XII",
+    academicYear: "2026/2027 Ganjil",
+    classCode: cls.joinCode,
+    studentCount: cls.memberships.length,
+    assessmentCount: cls.assessments.length,
+    creatorName: cls.teacher.name,
+    creator: { id: cls.teacher.id, name: cls.teacher.name, email: cls.teacher.email },
+    students: cls.memberships.map((m) => ({
+      id: m.student.id,
+      name: m.student.name,
+      nis: m.student.identifier ?? "—",
+      joinedAt: m.joinedAt.toISOString(),
+    })),
+    assessments: cls.assessments.map((a) => ({
+      id: a.id,
+      title: a.title,
+      code: a.id.slice(0, 8).toUpperCase(),
+      status: a.status === "OPEN" ? "active" : a.status === "CLOSED" ? "completed" : "draft",
+      dueDate: new Date().toISOString(),
+      questionCount: a.questions.length,
+      submissionCount: a._count.submissions,
+    })),
   };
 }
 
@@ -77,230 +105,132 @@ export async function getClassById(classId: string, userId: string, role: string
 // Assessments
 // ─────────────────────────────────────────────────────────────
 
-interface RawAssessment {
-  id: string;
-  classId: string;
-  title: string;
-  code: string;
-  subject: string;
-  status: string;
-  publicationStatus: string;
-  publishedAt: Date | null;
-  dueDate: Date;
-  durationMinutes: number;
-  raterCount: number;
-  targetRaters: number;
-  instructions: string;
-  class: { name: string };
-  questions: Array<{
-    id: string;
-    orderNumber: number;
-    prompt: string;
-    referenceAnswer: string;
-    maxScore: number;
-    expectedKeywords: string;
-    rubric: Array<{
-      id: string;
-      name: string;
-      weight: number;
-      maxScore: number;
-      description: string;
-      levels: string;
-    }>;
-  }>;
-  submissions: Array<{
-    id: string;
-    studentId: string;
-    statusWork: string;
-    statusGrading: string;
-    submittedAt: Date | null;
-    overallFinalScore: number | null;
-    publishedScore: number | null;
-    teacherGeneralNotes: string;
-    student: { id: string; name: string; identifier: string | null };
-    answers: Array<{
-      id: string;
-      questionId: string;
-      studentAnswer: string;
-      wordCount: number;
-      charCount: number;
-      teacherFeedback: string;
-      finalScore: number | null;
-      indobertScore: number | null;
-      aiExplanation: string | null;
-      isAiApplied: boolean;
-      status: string;
-      ratings: Array<{ score: number; rater: { name: string } }>;
-      criterionScores?: Array<{ criterionId: string; score: number }>;
-    }>;
-    gradeHistories: Array<{
-      id: string;
-      action: string;
-      actionLabel: string;
-      note: string;
-      createdAt: Date;
-      previousScore: number | null;
-      newScore: number | null;
-      questionId: string | null;
-      rater: { name: string } | null;
-    }>;
-  }>;
-}
-
 export const assessmentInclude = {
   class: { select: { name: true } },
   questions: {
-    orderBy: { orderNumber: "asc" as const },
-    include: { rubric: { orderBy: { name: "asc" as const } } },
+    orderBy: { order: "asc" as const },
+    include: { criteria: { orderBy: { order: "asc" as const } } },
   },
   submissions: {
     include: {
-      student: { select: { id: true, name: true, identifier: true } },
-      answers: {
+      student: { select: { id: true, name: true, identifier: true, anonCode: true } },
+      answers: true,
+      gradeRevisions: {
+        orderBy: { version: "desc" as const },
         include: {
-          ratings: { include: { rater: { select: { name: true } } } },
-          criterionScores: { select: { criterionId: true, score: true } },
+          author: { select: { name: true } },
+          items: true,
+          publications: true,
         },
-      },
-      gradeHistories: {
-        orderBy: { createdAt: "desc" as const },
-        include: { rater: { select: { name: true } } },
       },
     },
     orderBy: { createdAt: "asc" as const },
   },
+  publications: true,
 };
 
-function toQuestion(q: RawAssessment["questions"][number]): Question {
-  return {
-    id: q.orderNumber,
-    prompt: q.prompt,
+type DbAssessment = Awaited<ReturnType<typeof prisma.assessment.findFirst<{ include: typeof assessmentInclude }>>>;
+
+function toAssessment(a: NonNullable<DbAssessment>): Assessment {
+  const questions: Question[] = a.questions.map((q) => ({
+    id: q.order,
+    prompt: q.text,
     referenceAnswer: q.referenceAnswer,
     maxScore: q.maxScore,
-    expectedKeywords: safeJsonParse<string[]>(q.expectedKeywords, []),
-    rubric: q.rubric.map<RubricCriterion>((r) => ({
-      id: r.id,
-      name: r.name,
-      weight: r.weight,
-      maxScore: r.maxScore,
-      description: r.description,
-      levels: safeJsonParse(r.levels, []),
+    expectedKeywords: [],
+    rubric: q.criteria.map<RubricCriterion>((c) => ({
+      id: c.id,
+      name: `${c.code} · ${c.description}`,
+      weight: 1,
+      maxScore: c.maxScore,
+      description: c.description,
+      levels: Array.isArray(c.levels) ? (c.levels as any) : [],
     })),
-  };
-}
+  }));
 
-function toSubmission(
-  s: RawAssessment["submissions"][number],
-  questions: RawAssessment["questions"]
-): StudentSubmission {
-  const answers: Record<number, QuestionAnswer> = {};
+  const submissions: StudentSubmission[] = a.submissions.map((s) => {
+    const answers: Record<number, QuestionAnswer> = {};
+    const latestRev = s.gradeRevisions[0];
 
-  for (const q of questions) {
-    const match = s.answers.find((a) => a.questionId === q.id);
-    if (!match) {
-      answers[q.orderNumber] = {
-        questionId: q.orderNumber,
-        studentAnswer: "",
-        wordCount: 0,
-        lastUpdated: "",
-        scores: {},
-        teacherFeedback: "",
+    for (const q of a.questions) {
+      const match = s.answers.find((ans) => ans.questionId === q.id);
+      const itemsForQ = latestRev?.items.filter((item) => item.questionId === q.id) ?? [];
+      const scores: Record<string, number> = {};
+      let qFeedback = "";
+
+      for (const it of itemsForQ) {
+        if (it.score !== null) scores[it.criterionId] = it.score;
+        if (it.feedback) qFeedback = it.feedback;
+      }
+
+      answers[q.order] = {
+        questionId: q.order,
+        studentAnswer: match?.content ?? "",
+        wordCount: countWords(match?.content ?? ""),
+        lastUpdated: match?.savedAt.toISOString() ?? "",
+        scores,
+        teacherFeedback: qFeedback,
       };
-      continue;
     }
 
-    // Map DB saved criterion scores or calculate from holistic rating
-    const scores: Record<string, number> = {};
-    if (match.criterionScores && match.criterionScores.length > 0) {
-      for (const cs of match.criterionScores) {
-        scores[cs.criterionId] = cs.score;
-      }
-    } else if (match.ratings && match.ratings.length > 0) {
-      const holistic = match.ratings[0].score;
-      if (q.rubric.length > 0) {
-        const rubricTotal = q.rubric.reduce((sum, r) => sum + r.maxScore, 0);
-        let allocated = 0;
-        q.rubric.forEach((r, idx) => {
-          const isLast = idx === q.rubric.length - 1;
-          const value = isLast
-            ? Math.max(0, holistic - allocated)
-            : Math.round((r.maxScore / rubricTotal) * holistic);
-          scores[r.id] = value;
-          allocated += value;
-        });
-      }
-    }
+    const isSubmitted = s.status === "SUBMITTED";
+    const statusGrading = latestRev?.status === "FINAL" ? "final" : latestRev ? "draft_graded" : "ungraded";
 
-    answers[q.orderNumber] = {
-      questionId: q.orderNumber,
-      studentAnswer: match.studentAnswer,
-      wordCount: match.wordCount || countWords(match.studentAnswer),
-      lastUpdated: "",
-      scores,
-      teacherFeedback: match.teacherFeedback,
-      aiSuggestion: safeJsonParse<AiExplanation | undefined>(match.aiExplanation, undefined),
-      isAiApplied: match.isAiApplied ?? false,
+    return {
+      id: s.id,
+      studentId: s.student.id,
+      studentName: s.student.name,
+      studentNis: s.student.identifier ?? s.student.anonCode,
+      submittedAt: s.submittedAt?.toISOString() ?? null,
+      statusWork: isSubmitted ? "submitted" : "draft",
+      statusGrading,
+      raterName: latestRev?.author.name ?? "Guru",
+      answers,
+      publishedScore: latestRev?.publications.length ? latestRev.totalScore : null,
+      overallFinalScore: latestRev?.status === "FINAL" ? latestRev.totalScore : null,
+      teacherGeneralNotes: "",
+      gradeHistory: s.gradeRevisions.map((rev) => ({
+        id: rev.id,
+        timestamp: rev.createdAt.toISOString(),
+        raterName: rev.author.name,
+        action: rev.status === "FINAL" ? "finalized" : "score_adjustment",
+        actionLabel: rev.status === "FINAL" ? "Nilai Difinalisasi" : "Draf Nilai Disimpan",
+        newScore: rev.totalScore,
+      })),
     };
-  }
+  });
 
-  return {
-    id: s.id,
-    studentId: s.student.id,
-    studentName: s.student.name,
-    studentNis: s.student.identifier ?? "—",
-    submittedAt: s.submittedAt?.toISOString() ?? null,
-    statusWork: s.statusWork as StudentSubmission["statusWork"],
-    statusGrading: s.statusGrading as StudentSubmission["statusGrading"],
-    raterName: s.answers[0]?.ratings[0]?.rater.name ?? "Guru",
-    answers,
-    publishedScore: s.publishedScore,
-    overallFinalScore: s.overallFinalScore,
-    teacherGeneralNotes: s.teacherGeneralNotes,
-    gradeHistory: s.gradeHistories.map((g) => ({
-      id: g.id,
-      timestamp: g.createdAt.toISOString(),
-      raterName: g.rater?.name ?? "Sistem",
-      action: g.action as never,
-      actionLabel: g.actionLabel,
-      note: g.note,
-      previousScore: g.previousScore ?? undefined,
-      newScore: g.newScore ?? undefined,
-      questionId: undefined,
-    })),
-  };
-}
+  const isPublished = a.publications.length > 0;
+  const status = a.status === "OPEN" ? "active" : a.status === "CLOSED" ? "completed" : "draft";
 
-function toAssessment(a: RawAssessment): Assessment {
-  const questions = Array.isArray(a.questions) ? a.questions.map(toQuestion) : [];
   return {
     id: a.id,
     classId: a.classId,
-    className: a.class?.name ?? "Kelas",
+    className: a.class.name,
     title: a.title,
-    code: a.code,
-    subject: a.subject,
-    status: a.status as Assessment["status"],
-    publicationStatus: a.publicationStatus as Assessment["publicationStatus"],
-    publishedAt: a.publishedAt?.toISOString(),
-    dueDate: a.dueDate?.toISOString ? a.dueDate.toISOString() : String(a.dueDate),
-    durationMinutes: a.durationMinutes,
-    raterCount: a.raterCount ?? 1,
-    targetRaters: a.targetRaters ?? 1,
-    instructions: a.instructions,
+    code: a.id.slice(0, 8).toUpperCase(),
+    subject: a.class.name.includes("—") ? a.class.name.split("—")[1]?.trim() : a.class.name,
+    status,
+    publicationStatus: isPublished ? "published" : "unpublished",
+    publishedAt: a.publications[0]?.publishedAt.toISOString(),
+    dueDate: a.closedAt?.toISOString() ?? new Date().toISOString(),
+    durationMinutes: 60,
+    raterCount: 1,
+    targetRaters: 1,
+    instructions: a.instruction,
     questions,
-    submissions: Array.isArray(a.submissions)
-      ? a.submissions.map((s) => toSubmission(s, a.questions || []))
-      : [],
+    submissions,
   };
 }
 
 export async function getAssessmentsForUser(userId: string, role: string) {
+  const r = role.toLowerCase();
   const where =
-    role === "student"
-      ? { class: { enrollments: { some: { studentId: userId } } } }
-      : role === "admin"
+    r === "student"
+      ? { class: { memberships: { some: { studentId: userId } } } }
+      : r === "admin"
         ? {}
-        : { creatorId: userId };
+        : { class: { teacherId: userId } };
 
   const rows = await prisma.assessment.findMany({
     where,
@@ -308,7 +238,7 @@ export async function getAssessmentsForUser(userId: string, role: string) {
     orderBy: { createdAt: "desc" },
   });
 
-  return rows.map((r) => toAssessment(r as unknown as RawAssessment));
+  return rows.map((r) => toAssessment(r as any));
 }
 
 export async function getAssessmentsForClass(
@@ -316,18 +246,19 @@ export async function getAssessmentsForClass(
   userId: string,
   role: string
 ) {
+  const r = role.toLowerCase();
   const rows = await prisma.assessment.findMany({
     where: {
       classId,
-      ...(role === "student"
-        ? { class: { enrollments: { some: { studentId: userId } } }, status: { not: "draft" } }
+      ...(r === "student"
+        ? { class: { memberships: { some: { studentId: userId } } }, status: { not: "DRAFT" } }
         : {}),
     },
     include: assessmentInclude,
     orderBy: { createdAt: "desc" },
   });
 
-  return rows.map((r) => toAssessment(r as unknown as RawAssessment));
+  return rows.map((r) => toAssessment(r as any));
 }
 
 export async function getAssessmentById(
@@ -335,80 +266,54 @@ export async function getAssessmentById(
   userId: string,
   role: string
 ) {
+  const r = role.toLowerCase();
   const row = await prisma.assessment.findFirst({
     where: {
       id: assessmentId,
-      ...(role === "student"
-        ? { class: { enrollments: { some: { studentId: userId } } } }
-        : role === "admin"
+      ...(r === "student"
+        ? { class: { memberships: { some: { studentId: userId } } } }
+        : r === "admin"
           ? {}
-          : { creatorId: userId }),
+          : { class: { teacherId: userId } }),
     },
     include: assessmentInclude,
   });
 
   if (!row) return null;
-  return toAssessment(row as unknown as RawAssessment);
+  return toAssessment(row as any);
 }
 
-/** Assessments created by this teacher that have pending submissions awaiting grading. */
 export async function getPendingGradingAssessments(userId: string) {
   const pending = await prisma.assessment.findMany({
     where: {
-      creatorId: userId,
-      submissions: {
-        some: {
-          statusWork: "submitted",
-          statusGrading: { not: "final" },
-        },
-      },
+      class: { teacherId: userId },
+      status: "OPEN",
     },
     include: {
       class: { select: { name: true } },
       _count: {
         select: {
           submissions: {
-            where: {
-              statusWork: "submitted",
-              statusGrading: { not: "final" },
-            },
+            where: { status: "SUBMITTED" },
           },
         },
       },
     },
-    orderBy: { dueDate: "asc" },
+    orderBy: { createdAt: "desc" },
   });
 
-  if (pending.length > 0) return pending;
-
-  // Fallback to active assessments created by this teacher
-  return prisma.assessment.findMany({
-    where: {
-      creatorId: userId,
-    },
-    include: {
-      class: { select: { name: true } },
-      _count: { select: { submissions: true } },
-    },
-    orderBy: { dueDate: "asc" },
-    take: 3,
-  });
+  return pending;
 }
-
-// ─────────────────────────────────────────────────────────────
-// Dashboard statistics
-// ─────────────────────────────────────────────────────────────
 
 export async function getTeacherStats(userId: string) {
   const [total, active, completed, submissions] = await Promise.all([
-    prisma.assessment.count({ where: { creatorId: userId } }),
-    prisma.assessment.count({ where: { creatorId: userId, status: "active" } }),
-    prisma.assessment.count({ where: { creatorId: userId, status: "completed" } }),
+    prisma.assessment.count({ where: { class: { teacherId: userId } } }),
+    prisma.assessment.count({ where: { class: { teacherId: userId }, status: "OPEN" } }),
+    prisma.assessment.count({ where: { class: { teacherId: userId }, status: "CLOSED" } }),
     prisma.submission.count({
       where: {
-        assessment: { creatorId: userId },
-        statusWork: "submitted",
-        statusGrading: { not: "final" },
+        assessment: { class: { teacherId: userId } },
+        status: "SUBMITTED",
       },
     }),
   ]);
@@ -425,9 +330,9 @@ export async function getTeacherStats(userId: string) {
 export async function getAdminStats() {
   const [teachers, students, activeAssessments, totalAssessments] =
     await Promise.all([
-      prisma.user.count({ where: { role: "teacher" } }),
-      prisma.user.count({ where: { role: "student" } }),
-      prisma.assessment.count({ where: { status: "active" } }),
+      prisma.user.count({ where: { role: "TEACHER" } }),
+      prisma.user.count({ where: { role: "STUDENT" } }),
+      prisma.assessment.count({ where: { status: "OPEN" } }),
       prisma.assessment.count(),
     ]);
 

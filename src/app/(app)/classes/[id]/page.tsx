@@ -17,7 +17,8 @@ export default async function ClassDetailPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { id: userId, role } = session.user;
+  const userId = session.user.id;
+  const role = String(session.user.role).toLowerCase() as any;
   const { id: classId } = await params;
 
   const [cls, allClasses, assessments] = await Promise.all([

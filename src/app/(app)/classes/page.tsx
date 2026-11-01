@@ -9,7 +9,8 @@ export default async function ClassesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { id, role } = session.user;
+  const id = session.user.id;
+  const role = String(session.user.role).toLowerCase() as any;
   const [classes, assessments] = await Promise.all([
     getClassesForUser(id, role),
     getAssessmentsForUser(id, role),
@@ -23,3 +24,4 @@ export default async function ClassesPage() {
     />
   );
 }
+export const dynamic = "force-dynamic";

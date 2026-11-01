@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { QueryProvider } from "./query-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -25,14 +27,6 @@ export const metadata: Metadata = {
     "Platform asesmen dan penilaian esai berbasis Explainable AI untuk sekolah: rubrik transparan, rekomendasi IndoBERT, dan jejak audit setiap perubahan nilai.",
   applicationName: "ESAINA",
   authors: [{ name: "ESAINA" }],
-  keywords: [
-    "asesmen esai",
-    "penilaian otomatis",
-    "rubrik",
-    "IndoBERT",
-    "explainable AI",
-    "LMS",
-  ],
 };
 
 export const viewport: Viewport = {
@@ -41,14 +35,23 @@ export const viewport: Viewport = {
   themeColor: "#0A1680",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="id"
       className={`${plusJakarta.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full bg-paper text-ink" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full bg-paper text-ink" suppressHydrationWarning>
+        <QueryProvider>
+          {children}
+          <Toaster />
+        </QueryProvider>
+      </body>
     </html>
   );
 }

@@ -53,9 +53,7 @@ export function relativeTime(date: Date | string): string {
 
   if (absMinutes < 60) {
     const value = absMinutes;
-    return diffMs >= 0
-      ? `dalam ${value} menit`
-      : `${value} menit lalu`;
+    return diffMs >= 0 ? `dalam ${value} menit` : `${value} menit lalu`;
   }
   const hours = Math.round(absMinutes / 60);
   if (hours < 24) {

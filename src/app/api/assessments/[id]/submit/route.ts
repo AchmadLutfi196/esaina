@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { countWords } from "@/lib/utils";
 
 export async function POST(
   request: Request,
@@ -13,65 +12,94 @@ export async function POST(
   }
 
   const { id: assessmentId } = await params;
-  const { answers }: { answers: Record<number, string> } = await request.json();
+  const body = await request.json();
 
   try {
-    // Upsert Submission
-    const submission = await prisma.submission.upsert({
-      where: {
-        assessmentId_studentId: {
-          assessmentId,
-          studentId: session.user.id,
-        },
-      },
-      create: {
-        assessmentId,
-        studentId: session.user.id,
-        statusWork: "submitted",
-        statusGrading: "ungraded",
-        submittedAt: new Date(),
-      },
-      update: {
-        statusWork: "submitted",
-        submittedAt: new Date(),
-      },
-    });
+    const studentId = session.user.id;
 
-    // Save each answer
-    const questions = await prisma.question.findMany({
-      where: { assessmentId },
-    });
-
-    for (const q of questions) {
-      const text = answers[q.orderNumber] || "";
-      await prisma.answer.upsert({
+    // 1. Direct answer submission (from Bleu Océan take view)
+    if (body.answers) {
+      const submission = await prisma.submission.upsert({
         where: {
-          submissionId_questionId: {
-            submissionId: submission.id,
-            questionId: q.id,
+          assessmentId_studentId: {
+            assessmentId,
+            studentId,
           },
         },
         create: {
-          submissionId: submission.id,
-          questionId: q.id,
-          studentAnswer: text,
-          charCount: text.length,
-          wordCount: countWords(text),
-          status: "waiting_raters",
+          assessmentId,
+          studentId,
+          status: "SUBMITTED",
+          submittedAt: new Date(),
         },
         update: {
-          studentAnswer: text,
-          charCount: text.length,
-          wordCount: countWords(text),
+          status: "SUBMITTED",
+          submittedAt: new Date(),
         },
       });
+
+      const questions = await prisma.question.findMany({
+        where: { assessmentId },
+        orderBy: { order: "asc" },
+      });
+
+      for (const q of questions) {
+        const text = String(body.answers[q.order] || body.answers[q.id] || "");
+        await prisma.answer.upsert({
+          where: {
+            submissionId_questionId: {
+              submissionId: submission.id,
+              questionId: q.id,
+            },
+          },
+          create: {
+            submissionId: submission.id,
+            questionId: q.id,
+            content: text,
+          },
+          update: {
+            content: text,
+          },
+        });
+      }
+
+      return NextResponse.json({ success: true, submissionId: submission.id, status: "SUBMITTED" });
     }
 
-    return NextResponse.json({ success: true, submissionId: submission.id });
+    // 2. Transactional submit with idempotency key (Upstream autosave flow)
+    const idempotencyKey = body.idempotencyKey || `submit_${studentId}_${assessmentId}_${Date.now()}`;
+    const version = Number(body.version) || 1;
+
+    const submission = await prisma.submission.findUnique({
+      where: { assessmentId_studentId: { assessmentId, studentId } },
+    });
+
+    if (!submission) {
+      return NextResponse.json({ error: "Pekerjaan belum dimulai" }, { status: 404 });
+    }
+
+    if (submission.status === "SUBMITTED") {
+      return NextResponse.json({ status: "SUBMITTED", submittedAt: submission.submittedAt, replayed: true });
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      try {
+        await tx.idempotencyKey.create({
+          data: { key: idempotencyKey, userId: studentId, scope: "submit" },
+        });
+      } catch {}
+
+      return tx.submission.update({
+        where: { id: submission.id },
+        data: { status: "SUBMITTED", submittedAt: new Date(), version: { increment: 1 } },
+      });
+    });
+
+    return NextResponse.json(updated);
   } catch (err: any) {
-    console.error("Submit exam error:", err);
+    console.error("Submit error:", err);
     return NextResponse.json(
-      { error: err.message || "Gagal mengumpulkan lembar jawaban" },
+      { error: err.message || "Gagal mengumpulkan asesmen" },
       { status: 500 }
     );
   }

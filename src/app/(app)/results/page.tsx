@@ -8,11 +8,12 @@ export const metadata = { title: "Hasil & Nilai" };
 export default async function ResultsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (session.user.role !== "student") redirect("/dashboard");
+  const role = String(session.user.role).toLowerCase() as any;
+  if (role !== "student") redirect("/dashboard");
 
   const assessments = await getAssessmentsForUser(
     session.user.id,
-    session.user.role
+    role
   );
 
   return (
@@ -22,3 +23,4 @@ export default async function ResultsPage() {
     />
   );
 }
+export const dynamic = "force-dynamic";

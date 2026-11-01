@@ -8,9 +8,10 @@ export const metadata = { title: "Ruang Penilaian" };
 export default async function GradingIndexPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (session.user.role === "student") redirect("/dashboard");
+  const id = session.user.id;
+  const role = String(session.user.role).toLowerCase() as any;
+  if (role === "student") redirect("/dashboard");
 
-  const { id, role } = session.user;
   const assessments = await getAssessmentsForUser(id, role);
 
   return (
@@ -21,3 +22,4 @@ export default async function GradingIndexPage() {
     />
   );
 }
+export const dynamic = "force-dynamic";

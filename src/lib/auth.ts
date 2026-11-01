@@ -24,15 +24,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || !user.isActive) return null;
 
-        const ok = await bcrypt.compare(password, user.password);
+        const ok = await bcrypt.compare(
+          password,
+          user.passwordHash || (user as any).password || ""
+        );
         if (!ok) return null;
 
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role as Role,
-          identifier: user.identifier,
+          role: user.role,
+          identifier: user.identifier ?? null,
         };
       },
     }),
@@ -41,8 +44,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as { role: Role }).role;
-        token.identifier = (user as { identifier?: string | null }).identifier ?? null;
+        token.role = (user as any).role;
+        token.identifier = (user as any).identifier ?? null;
       } else if (token.email) {
         // Keep session in sync with database (e.g. after database re-seeds or role updates)
         try {
@@ -52,7 +55,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
           if (dbUser && dbUser.isActive) {
             token.id = dbUser.id;
-            token.role = dbUser.role as Role;
+            token.role = dbUser.role;
             token.identifier = dbUser.identifier;
           }
         } catch (err) {
@@ -64,7 +67,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as Role;
+        session.user.role = token.role as any;
         session.user.identifier = (token.identifier as string | null) ?? null;
       }
       return session;

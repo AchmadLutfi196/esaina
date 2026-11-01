@@ -13,7 +13,8 @@ export default async function AssessmentDetailPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { id: userId, role } = session.user;
+  const userId = session.user.id;
+  const role = String(session.user.role).toLowerCase() as any;
   const { id: assessmentId } = await params;
 
   const assessment = await getAssessmentById(assessmentId, userId, role);

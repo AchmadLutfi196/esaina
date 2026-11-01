@@ -13,7 +13,10 @@ export default async function TakeAssessmentPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const { id: userId, role, name, identifier } = session.user;
+  const userId = session.user.id;
+  const role = String(session.user.role).toLowerCase() as any;
+  const name = session.user.name;
+  const identifier = (session.user as any).identifier ?? "—";
   if (role !== "student") redirect("/dashboard");
 
   const { id: assessmentId } = await params;

@@ -8,7 +8,8 @@ export const metadata = { title: "Kelola Pengguna" };
 export default async function AdminUsersPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (session.user.role !== "admin") redirect("/dashboard");
+  const roleStr = String(session.user.role).toLowerCase();
+  if (roleStr !== "admin") redirect("/dashboard");
 
   const users = await prisma.user.findMany({
     orderBy: [{ role: "asc" }, { name: "asc" }],
@@ -23,8 +24,7 @@ export default async function AdminUsersPage() {
       _count: {
         select: {
           submissions: true,
-          createdAssessments: true,
-          createdClasses: true,
+          taughtClasses: true,
         },
       },
     },
@@ -36,14 +36,15 @@ export default async function AdminUsersPage() {
         id: u.id,
         name: u.name,
         email: u.email,
-        role: u.role as "admin" | "teacher" | "student",
+        role: String(u.role).toLowerCase() as "admin" | "teacher" | "student",
         identifier: u.identifier,
         isActive: u.isActive,
         createdAt: u.createdAt.toISOString(),
         submissionCount: u._count.submissions,
-        assessmentCount: u._count.createdAssessments,
-        classCount: u._count.createdClasses,
+        assessmentCount: 0,
+        classCount: u._count.taughtClasses,
       }))}
     />
   );
 }
+export const dynamic = "force-dynamic";

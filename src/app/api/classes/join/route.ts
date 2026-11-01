@@ -8,18 +8,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { classCode } = await request.json();
-  if (!classCode) {
-    return NextResponse.json(
-      { error: "Kode kelas wajib diisi" },
-      { status: 400 }
-    );
-  }
-
   try {
+    const body = await request.json();
+    const code = String(body.classCode || body.joinCode || "").trim().toUpperCase();
+
+    if (!code) {
+      return NextResponse.json(
+        { error: "Kode kelas wajib diisi" },
+        { status: 400 }
+      );
+    }
+
     const cls = await prisma.class.findUnique({
-      where: { classCode: classCode.trim().toUpperCase() },
-      include: { creator: { select: { name: true } } },
+      where: { joinCode: code },
+      include: { teacher: { select: { name: true } } },
     });
 
     if (!cls) {
@@ -29,27 +31,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if already enrolled
-    const existing = await prisma.enrollment.findUnique({
+    // Idempotent join membership
+    await prisma.classMembership.upsert({
       where: {
         classId_studentId: {
           classId: cls.id,
           studentId: session.user.id,
         },
       },
-    });
-
-    if (existing) {
-      return NextResponse.json({
-        success: true,
-        classId: cls.id,
-        message: "Anda sudah terdaftar di kelas ini",
-      });
-    }
-
-    // Enroll student
-    await prisma.enrollment.create({
-      data: {
+      update: {},
+      create: {
         classId: cls.id,
         studentId: session.user.id,
       },
@@ -59,7 +50,7 @@ export async function POST(request: Request) {
       success: true,
       classId: cls.id,
       className: cls.name,
-      teacherName: cls.creator.name,
+      teacherName: cls.teacher.name,
     });
   } catch (err: any) {
     console.error("Join class error:", err);

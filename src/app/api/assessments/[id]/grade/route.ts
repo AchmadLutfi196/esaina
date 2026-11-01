@@ -7,7 +7,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!session?.user || session.user.role === "student") {
+  const role = String(session?.user?.role || "").toUpperCase();
+  if (!session?.user || role === "STUDENT") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -28,127 +29,95 @@ export async function POST(
   } = body;
 
   try {
-    // Find the question by orderNumber
-    const question = await prisma.question.findUnique({
+    const question = await prisma.question.findFirst({
       where: {
-        assessmentId_orderNumber: {
-          assessmentId,
-          orderNumber: questionId,
-        },
+        assessmentId,
+        order: questionId,
       },
-      include: { rubric: true },
+      include: { criteria: true },
     });
 
     if (!question) {
       return NextResponse.json({ error: "Soal tidak ditemukan" }, { status: 404 });
     }
 
-    // Upsert the Answer record
-    const totalQScore = Object.values(scores).reduce((a, b) => a + Number(b), 0);
+    const teacherId = session.user.id;
 
-    const answer = await prisma.answer.upsert({
-      where: {
-        submissionId_questionId: {
+    // Find or create active grade revision for this submission
+    let revision = await prisma.gradeRevision.findFirst({
+      where: { submissionId, status: "DRAFT" },
+      orderBy: { version: "desc" },
+    });
+
+    if (!revision) {
+      const lastRev = await prisma.gradeRevision.findFirst({
+        where: { submissionId },
+        orderBy: { version: "desc" },
+      });
+      const nextVer = (lastRev?.version ?? 0) + 1;
+
+      revision = await prisma.gradeRevision.create({
+        data: {
           submissionId,
-          questionId: question.id,
+          authorId: teacherId,
+          status: isFinal ? "FINAL" : "DRAFT",
+          version: nextVer,
+          totalScore: 0,
         },
-      },
-      create: {
-        submissionId,
-        questionId: question.id,
-        teacherFeedback: feedback,
-        finalScore: isFinal ? totalQScore : null,
-        finalScoreBy: isFinal ? session.user.id : null,
-        finalScoreAt: isFinal ? new Date() : null,
-        status: isFinal ? "completed" : "ready_for_review",
-      },
-      update: {
-        teacherFeedback: feedback,
-        finalScore: isFinal ? totalQScore : undefined,
-        finalScoreBy: isFinal ? session.user.id : undefined,
-        finalScoreAt: isFinal ? new Date() : undefined,
-        status: isFinal ? "completed" : "ready_for_review",
-      },
-    });
+      });
+    }
 
-    // Upsert Rating for the current rater
-    await prisma.rating.upsert({
-      where: {
-        answerId_raterId: {
-          answerId: answer.id,
-          raterId: session.user.id,
-        },
-      },
-      create: {
-        answerId: answer.id,
-        raterId: session.user.id,
-        score: totalQScore,
-      },
-      update: {
-        score: totalQScore,
-      },
-    });
-
-    // Save per-criterion scores
+    // Save GradeItem per criterion
     for (const [criterionId, scoreVal] of Object.entries(scores)) {
-      await prisma.criterionScore.upsert({
+      await prisma.gradeItem.upsert({
         where: {
-          answerId_criterionId: {
-            answerId: answer.id,
+          revisionId_questionId_criterionId: {
+            revisionId: revision.id,
+            questionId: question.id,
             criterionId,
           },
         },
         create: {
-          answerId: answer.id,
+          revisionId: revision.id,
+          questionId: question.id,
           criterionId,
           score: Number(scoreVal),
+          feedback: feedback || "",
+          source: "MANUAL",
         },
         update: {
           score: Number(scoreVal),
+          feedback: feedback || "",
         },
       });
     }
 
-    // Audit trail: GradeHistory
-    await prisma.gradeHistory.create({
+    // Recalculate revision total score
+    const allItems = await prisma.gradeItem.findMany({
+      where: { revisionId: revision.id },
+    });
+    const totalScore = allItems.reduce((sum, item) => sum + (item.score ?? 0), 0);
+
+    await prisma.gradeRevision.update({
+      where: { id: revision.id },
       data: {
-        submissionId,
-        questionId: question.id,
-        raterId: session.user.id,
-        action: isFinal ? "finalized" : "score_adjustment",
-        actionLabel: isFinal ? "Nilai difinalisasi" : "Penyesuaian skor",
-        newScore: totalQScore,
-        note: `Penilaian soal #${questionId} disimpan oleh ${session.user.name}.`,
+        totalScore,
+        status: isFinal ? "FINAL" : "DRAFT",
+        approvedById: isFinal ? teacherId : null,
+        approvedAt: isFinal ? new Date() : null,
       },
     });
 
-    // Update submission status if all questions are scored
-    if (isFinal) {
-      const allAnswers = await prisma.answer.findMany({
-        where: { submissionId },
-      });
-      const allDone = allAnswers.every((a) => a.status === "completed");
-      const overallFinalScore = allAnswers.reduce(
-        (sum, a) => sum + (a.finalScore ?? 0),
-        0
-      );
-
-      await prisma.submission.update({
-        where: { id: submissionId },
-        data: {
-          statusGrading: allDone ? "final" : "draft_graded",
-          overallFinalScore: allDone ? overallFinalScore : undefined,
-          finalizedBy: allDone ? session.user.id : undefined,
-          finalizedAt: allDone ? new Date() : undefined,
-        },
-      });
-    }
-
-    return NextResponse.json({ success: true, score: totalQScore });
+    return NextResponse.json({
+      success: true,
+      revisionId: revision.id,
+      totalScore,
+      isFinal,
+    });
   } catch (err: any) {
-    console.error("Grading save error:", err);
+    console.error("Save grade error:", err);
     return NextResponse.json(
-      { error: err.message || "Gagal menyimpan penilaian" },
+      { error: err.message || "Gagal menyimpan nilai" },
       { status: 500 }
     );
   }

@@ -10,13 +10,15 @@ export default async function AppLayout({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
+  const roleStr = String(session.user.role).toLowerCase() as any;
+
   return (
     <AppShell
       user={{
         id: session.user.id,
         name: session.user.name ?? "Pengguna",
-        role: session.user.role,
-        identifier: session.user.identifier,
+        role: roleStr,
+        identifier: (session.user as any).identifier ?? null,
       }}
     >
       {children}

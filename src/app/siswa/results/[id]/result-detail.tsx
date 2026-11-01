@@ -1,0 +1,5 @@
+"use client";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
+import { Card, CardHeader } from "@/components/ui/card";
+export function ResultDetail({ id }: { id: string }) { const q = useQuery({ queryKey: ["result", id], queryFn: () => api.get<{ assessment: { title: string }; revision: { totalScore: number; items: { questionId: string; criterionId: string; score: number | null; feedback: string }[] }; publishedAt: string }>(`/api/student/results/${id}`) }); if (q.isPending) return <p role="status">Memuat hasil…</p>; if (q.isError) return <p role="alert">{q.error.message}</p>; return <div className="flex flex-col gap-5"><Card><CardHeader><h1 className="text-3xl font-semibold text-primary">{q.data.assessment.title}</h1><p className="text-2xl font-semibold">{q.data.revision.totalScore} poin</p></CardHeader></Card>{q.data.revision.items.map((i) => <Card className="gap-2 px-5" key={`${i.questionId}-${i.criterionId}`}><p className="font-medium">{i.score ?? "—"} poin</p><p className="text-sm text-muted-foreground">{i.feedback || "Tidak ada feedback."}</p></Card>)}</div>; }
