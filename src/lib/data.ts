@@ -131,11 +131,20 @@ export const assessmentInclude = {
 
 type DbAssessment = Awaited<ReturnType<typeof prisma.assessment.findFirst<{ include: typeof assessmentInclude }>>>;
 
-function toAssessment(a: NonNullable<DbAssessment>): Assessment {
+type Viewer = { id: string; role: string };
+
+/**
+ * PRD invariant (allowlist): siswa tidak boleh menerima jawaban acuan, rubrik
+ * internal, maupun data siswa lain. Semua pemanggil wajib mengirim `viewer`
+ * agar penyaringan dapat dilakukan sedini mungkin (sebelum serialisasi RSC).
+ */
+function toAssessment(a: NonNullable<DbAssessment>, viewer?: Viewer): Assessment {
+  const isStudent = (viewer?.role ?? "").toLowerCase() === "student";
+
   const questions: Question[] = a.questions.map((q) => ({
     id: q.order,
     prompt: q.text,
-    referenceAnswer: q.referenceAnswer,
+    referenceAnswer: isStudent ? undefined : q.referenceAnswer,
     maxScore: q.maxScore,
     expectedKeywords: [],
     rubric: q.criteria.map<RubricCriterion>((c) => ({
@@ -148,7 +157,10 @@ function toAssessment(a: NonNullable<DbAssessment>): Assessment {
     })),
   }));
 
-  const submissions: StudentSubmission[] = a.submissions.map((s) => {
+  const visibleSubmissions =
+    isStudent && viewer ? a.submissions.filter((s) => s.student.id === viewer.id) : a.submissions;
+
+  const submissions: StudentSubmission[] = visibleSubmissions.map((s) => {
     const answers: Record<number, QuestionAnswer> = {};
     const latestRev = s.gradeRevisions[0];
 
@@ -175,6 +187,8 @@ function toAssessment(a: NonNullable<DbAssessment>): Assessment {
 
     const isSubmitted = s.status === "SUBMITTED";
     const statusGrading = latestRev?.status === "FINAL" ? "final" : latestRev ? "draft_graded" : "ungraded";
+    // Siswa hanya melihat nilai setelah revisi diterbitkan (PRD FR15).
+    const gradeVisible = !isStudent || Boolean(latestRev?.publications.length);
 
     return {
       id: s.id,
@@ -183,20 +197,29 @@ function toAssessment(a: NonNullable<DbAssessment>): Assessment {
       studentNis: s.student.identifier ?? s.student.anonCode,
       submittedAt: s.submittedAt?.toISOString() ?? null,
       statusWork: isSubmitted ? "submitted" : "draft",
-      statusGrading,
-      raterName: latestRev?.author.name ?? "Guru",
-      answers,
+      statusGrading: gradeVisible ? statusGrading : "ungraded",
+      raterName: gradeVisible ? (latestRev?.author.name ?? "Guru") : "",
+      answers: gradeVisible
+        ? answers
+        : Object.fromEntries(
+            Object.entries(answers).map(([k, v]) => [
+              k,
+              { ...v, scores: {}, teacherFeedback: "", aiSuggestion: undefined, isAiApplied: false },
+            ])
+          ),
       publishedScore: latestRev?.publications.length ? latestRev.totalScore : null,
-      overallFinalScore: latestRev?.status === "FINAL" ? latestRev.totalScore : null,
-      teacherGeneralNotes: "",
-      gradeHistory: s.gradeRevisions.map((rev) => ({
-        id: rev.id,
-        timestamp: rev.createdAt.toISOString(),
-        raterName: rev.author.name,
-        action: rev.status === "FINAL" ? "finalized" : "score_adjustment",
-        actionLabel: rev.status === "FINAL" ? "Nilai Difinalisasi" : "Draf Nilai Disimpan",
-        newScore: rev.totalScore,
-      })),
+      overallFinalScore: gradeVisible && latestRev?.status === "FINAL" ? latestRev.totalScore : null,
+      teacherGeneralNotes: gradeVisible ? "" : "",
+      gradeHistory: gradeVisible
+        ? s.gradeRevisions.map((rev) => ({
+            id: rev.id,
+            timestamp: rev.createdAt.toISOString(),
+            raterName: rev.author.name,
+            action: rev.status === "FINAL" ? "finalized" : "score_adjustment",
+            actionLabel: rev.status === "FINAL" ? "Nilai Difinalisasi" : "Draf Nilai Disimpan",
+            newScore: rev.totalScore,
+          }))
+        : [],
     };
   });
 
@@ -238,7 +261,7 @@ export async function getAssessmentsForUser(userId: string, role: string) {
     orderBy: { createdAt: "desc" },
   });
 
-  return rows.map((r) => toAssessment(r as any));
+  return rows.map((row) => toAssessment(row as any, { id: userId, role }));
 }
 
 export async function getAssessmentsForClass(
@@ -258,7 +281,7 @@ export async function getAssessmentsForClass(
     orderBy: { createdAt: "desc" },
   });
 
-  return rows.map((r) => toAssessment(r as any));
+  return rows.map((row) => toAssessment(row as any, { id: userId, role }));
 }
 
 export async function getAssessmentById(
@@ -280,7 +303,7 @@ export async function getAssessmentById(
   });
 
   if (!row) return null;
-  return toAssessment(row as any);
+  return toAssessment(row as any, { id: userId, role });
 }
 
 export async function getPendingGradingAssessments(userId: string) {

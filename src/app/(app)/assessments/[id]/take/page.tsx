@@ -28,9 +28,22 @@ export default async function TakeAssessmentPage({
   );
   const isSubmitted = mySubmission?.statusWork === "submitted";
 
+  // Allowlist ketat untuk payload siswa saat mengerjakan (PRD FR05–FR08):
+  // tanpa jawaban acuan, rubrik internal, maupun data siswa lain.
+  const examAssessment = {
+    ...assessment,
+    questions: assessment.questions.map((q) => ({
+      ...q,
+      referenceAnswer: undefined,
+      expectedKeywords: [],
+      rubric: [],
+    })),
+    submissions: mySubmission ? [mySubmission] : [],
+  };
+
   return (
     <StudentExamView
-      assessment={assessment}
+      assessment={examAssessment}
       studentName={name ?? "Siswa"}
       studentNis={identifier ?? "—"}
       isAlreadySubmitted={isSubmitted}
