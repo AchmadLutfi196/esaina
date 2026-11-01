@@ -11,10 +11,22 @@ export class HttpError extends Error {
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers: { "Content-Type": "application/json", ...init?.headers },
+      signal: init?.signal ?? AbortSignal.timeout(45_000),
+    });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.name === "AbortError" || error.name === "TimeoutError")
+    ) {
+      throw new HttpError(408, "timeout", "Permintaan melebihi batas waktu.");
+    }
+    throw error;
+  }
 
   const data = res.status === 204 ? null : await res.json().catch(() => null);
 

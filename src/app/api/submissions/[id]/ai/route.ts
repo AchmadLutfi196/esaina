@@ -8,6 +8,9 @@ import { buildPrompt, cacheKey, PROMPT_VERSION, validateAiPayload } from "@/lib/
 
 type Ctx = { params: Promise<{ id: string }> };
 
+// Lock hanya per-instance proses; naikkan ke advisory lock DB bila multi-instance.
+const inFlight = new Set<string>();
+
 export const POST = route(async (_req, ctx: Ctx) => {
   const teacher = await requireTeacher();
   const { id } = await ctx.params;
@@ -18,27 +21,36 @@ export const POST = route(async (_req, ctx: Ctx) => {
   if (!data) throw notFound("LJK");
   const answers = new Map(data.answers.map((a) => [a.questionId, a.content]));
   const questions = data.assessment.questions.map((q) => ({ ...q, answer: answers.get(q.id) ?? "" }));
-  const key = cacheKey({ submissionId: id, version: data.version, questions });
+  const key = cacheKey({ submissionId: id, version: data.version, questions, provider: process.env.LLM_PROVIDER ?? "openai-compatible", model: process.env.LLM_MODEL ?? "" });
   const cached = await prisma.aIResult.findFirst({ where: { submissionId: id, cacheKey: key, validationOk: true }, orderBy: { createdAt: "desc" }, select: { id: true, payload: true, provider: true, model: true, promptVersion: true } });
   if (cached) return ok({ aiResult: cached, cached: true });
 
-  let raw = "";
-  let provider = "";
-  let model = "";
-  let lastError = "";
-  for (let attempt = 0; attempt < 2; attempt++) {
+  if (inFlight.has(id)) throw conflict("Saran AI sedang diproses untuk LJK ini.");
+  inFlight.add(id);
+  try {
+    let adapter;
     try {
-      const adapter = createLlmAdapter();
-      provider = adapter.provider; model = adapter.model;
-      const prompts = questions.flatMap((q) => [buildPrompt(q)]);
-      raw = await adapter.complete({ system: prompts[0].system, user: JSON.stringify({ questions: questions.map((q) => ({ ...q, referenceAnswer: q.referenceAnswer, answer: q.answer })) }) });
-      const payload = validateAiPayload(JSON.parse(raw), questions);
-      const aiResult = await prisma.aIResult.create({ data: { submissionId: id, requestedById: teacher.id, provider, model, promptVersion: PROMPT_VERSION, cacheKey: key, sourceVersion: data.version, payload: payload as never, validationOk: true }, select: { id: true, payload: true, provider: true, model: true, promptVersion: true } });
-      return ok({ aiResult, cached: false });
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : "AI gagal.";
+      adapter = createLlmAdapter();
+    } catch {
+      throw validationError({ ai: "AI belum dikonfigurasi. Jalur penilaian manual tetap tersedia." });
     }
+    const { provider, model } = adapter;
+
+    let lastError = "";
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const prompts = questions.flatMap((q) => [buildPrompt(q)]);
+        const raw = await adapter.complete({ system: prompts[0].system, user: JSON.stringify({ questions: questions.map((q) => ({ ...q, referenceAnswer: q.referenceAnswer, answer: q.answer })) }) });
+        const payload = validateAiPayload(JSON.parse(raw), questions);
+        const aiResult = await prisma.aIResult.create({ data: { submissionId: id, requestedById: teacher.id, provider, model, promptVersion: PROMPT_VERSION, cacheKey: key, sourceVersion: data.version, payload: payload as never, validationOk: true }, select: { id: true, payload: true, provider: true, model: true, promptVersion: true } });
+        return ok({ aiResult, cached: false });
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : "AI gagal.";
+      }
+    }
+    await prisma.aIResult.create({ data: { submissionId: id, requestedById: teacher.id, provider, model, promptVersion: PROMPT_VERSION, cacheKey: key, sourceVersion: data.version, payload: { error: lastError } as never, validationOk: false, validationMsg: lastError } });
+    throw validationError({ ai: "Saran AI gagal divalidasi. Jalur penilaian manual tetap tersedia." });
+  } finally {
+    inFlight.delete(id);
   }
-  await prisma.aIResult.create({ data: { submissionId: id, requestedById: teacher.id, provider: provider || "unknown", model: model || "unknown", promptVersion: PROMPT_VERSION, cacheKey: key, sourceVersion: data.version, payload: { error: lastError } as never, validationOk: false, validationMsg: lastError } });
-  throw validationError({ ai: "Saran AI gagal divalidasi. Jalur penilaian manual tetap tersedia." });
 });
