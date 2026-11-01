@@ -29,7 +29,7 @@ export function AdminDashboard({
   const kpis = [
     {
       label: "TOTAL GURU",
-      value: stats.teachers || 21,
+      value: stats.teachers ?? 0,
       sub: "Guru Pengampu",
       foot: "Guru Mata Pelajaran",
       tone: "brand",
@@ -38,7 +38,7 @@ export function AdminDashboard({
     },
     {
       label: "TOTAL SISWA",
-      value: stats.students || 360,
+      value: stats.students ?? 0,
       sub: "Siswa Terdaftar",
       foot: "Peserta Asesmen Aktif",
       tone: "purple",
@@ -47,9 +47,9 @@ export function AdminDashboard({
     },
     {
       label: "ASESMEN AKTIF",
-      value: stats.activeAssessments || 37,
+      value: stats.activeAssessments ?? 0,
       sub: "Sedang Berjalan",
-      foot: `${stats.totalAssessments || 74} Total Paket`,
+      foot: `${stats.totalAssessments ?? 0} Total Paket`,
       tone: "blue",
       icon: FileText,
       href: "/assessments?status=active",

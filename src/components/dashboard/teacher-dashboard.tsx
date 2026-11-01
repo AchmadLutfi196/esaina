@@ -48,20 +48,35 @@ export function TeacherDashboard({
   const activeAssessments = assessments.filter((a) => a.status === "active");
   const displayAssessments = (activeAssessments.length > 0 ? activeAssessments : assessments).slice(0, 4);
 
-  // Generate week calendar items around today
-  const daysOfWeek = [
-    { day: "Sen", date: 23, isToday: false },
-    { day: "Sel", date: 24, isToday: false },
-    { day: "Rab", date: 25, isToday: true },
-    { day: "Kam", date: 26, isToday: false },
-    { day: "Jum", date: 27, isToday: false },
-    { day: "Sab", date: 28, isToday: false },
-    { day: "Min", date: 29, isToday: false },
-  ];
+  // Generate week calendar items dynamically based on current date
+  const today = new Date();
+  const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+  const currentDayIndex = today.getDay();
+  const mondayOffset = currentDayIndex === 0 ? -6 : 1 - currentDayIndex;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+
+  const daysOfWeek = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const isToday =
+      d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear();
+    const dayName = dayNames[d.getDay()];
+    return { day: dayName, date: d.getDate(), isToday };
+  });
+
+  const formattedToday = today.toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="animate-fade-up space-y-6">
-      {/* Top Section: Header & Week Calendar (matching 02 · Guru dasbor.png) */}
+      {/* Top Section: Header & Week Calendar */}
       <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/80 bg-white/85 p-6 shadow-[0_4px_24px_rgba(10,22,128,0.04)] backdrop-blur-md md:flex-row md:items-center">
         <div className="space-y-1">
           <h1 className="font-heading text-2xl font-extrabold tracking-wide text-brand sm:text-3xl">
@@ -76,7 +91,7 @@ export function TeacherDashboard({
         <div className="flex flex-col items-start gap-1.5 rounded-xl border border-line/60 bg-paper/60 p-3 sm:items-end">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted">
             <Calendar className="h-3.5 w-3.5 text-brand" />
-            <span>Kalender pekan ini · 25 Oktober 2026</span>
+            <span>Kalender pekan ini · {formattedToday}</span>
           </div>
           <div className="flex items-center gap-1">
             {daysOfWeek.map((d) => (
